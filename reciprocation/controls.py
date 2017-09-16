@@ -19,33 +19,12 @@ def input_y(val):
     return 5 + 100 * (1 - val)
 
 preset_strats={
-    "fair":[(-1,-1),(0,0),(math.sqrt(2)/2,math.sqrt(2)/2)],
+    "fair":[(-1,-1),(math.sqrt(2)/2,math.sqrt(2)/2)],
     "godfather":[(0,-1),(99.0/101,20.0/101)],
-    "rational":[(0,0),(20.0/101,99.0/101)]
+    "rational":[(0,0),(20.0/101,99.0/101)],
+    "limitsolo":[(0,0),(math.sqrt(.75),.5)],
+    "acceptsolo":[(0,0),(.5,math.sqrt(.75))]
 }
-
-def interpolate(s1,s2,p):
-    """
-
-    :param s1: tuple of (opponents gift to player, player's gift to opponent)
-    :param s2:
-    :param p: opponent's gift to player
-    :return: player's gift to opponent
-    """
-    x1=s1[0]+math.sqrt(1-s1[1]**2)
-    y1=math.sqrt(1-s1[0]**2)+s1[1]
-    x2 = s2[0] + math.sqrt(1 - s2[1] ** 2)
-    y2 = math.sqrt(1 - s2[0] ** 2) + s2[1]
-    slope=(y2-y1)/(x2-x1)
-    intercept=y1-slope*x1
-    x3=p
-    y3=math.sqrt(1-p**2)
-    A=slope**2+1
-    B=2*(slope*(intercept-y3)-x3)
-    C=y3**2-1+x3**2-2*intercept*y3+intercept**2
-    x=(-B+math.sqrt(B**2-4*A*C))/(2*A)
-    y=slope*x+intercept
-    return y-y3
 
 
 class ReciprocalStrategySelector(tk.Frame):
@@ -78,6 +57,7 @@ class ReciprocalStrategySelector(tk.Frame):
         buttonpanel.pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Clear", command=self.__clear).pack(side=tk.LEFT)
         self.stratlist = []
+        self.bias=None
         for s in preset_strats.keys():
             tk.Button(buttonpanel, text=s,command=(lambda x: lambda: self.loadstrat(x))(s)).pack(side=tk.LEFT)
 
@@ -126,8 +106,12 @@ class ReciprocalStrategySelector(tk.Frame):
         for first, second in zip(self.stratlist[:-1], self.stratlist[1:]):
             for b in [.1, .2, .3, .4, .5, .6, .7, .8, .9]:
                 xp = b * first[0] + (1 - b) * second[0]
-                yo=strategies.interpolate(first,second,b*first[0]+(1-b)*second[0])
+                if self.bias is None:
+                    yo=strategies.interpolate(first,second,b*first[0]+(1-b)*second[0])
+                else:
+                    yo = strategies.biasedinterpolate(first, second, b * first[0] + (1 - b) * second[0],self.bias)
                 self.add_display_dot(xp + math.sqrt(1 - yo * yo), math.sqrt(1 - xp * xp) + yo, tags="dots", fill="blue")
+                self.add_input_dot(xp,yo,tags="filldots")
         self.suffixstrat = []
         for b in [.1, .2, .3, .4, .5, .6, .7, .8, .9, 1]:
             xp = self.stratlist[-1][0] * (1 - b) + b
@@ -147,7 +131,7 @@ class ReciprocalStrategySelector(tk.Frame):
         return self.prefixstrat + self.stratlist + self.suffixstrat
 
     def getResponse(self,move):
-        strat=strategies.reciprocal(self.getstrat()).respond(move)
+        strat=strategies.reciprocal(self.stratlist,self.bias).respond(move)
         return strat
 
 class GameDisplay(tk.Frame):

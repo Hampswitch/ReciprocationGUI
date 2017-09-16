@@ -1,7 +1,7 @@
 import Tkinter as tk
 import controls
 import math
-import learners
+import guilearners
 
 
 
@@ -16,12 +16,13 @@ class gametracker(tk.Frame):
         self.stratselector[0] = controls.ReciprocalStrategySelector(displaypanel)
         self.stratselector[0].pack(side=tk.LEFT)
 
-        self.gamedisp = controls.GameDisplay(displaypanel,discount=.2)
+        self.gamedisp = controls.GameDisplay(displaypanel,discount=.01)
         self.gamedisp.pack(side=tk.LEFT)
 
         #self.stratselector[1] = controls.ReciprocalStrategySelector(displaypanel)
         #self.stratselector[1] = learners.Static(displaypanel)
-        self.stratselector[1]=learners.AdHoc(displaypanel)
+        #self.stratselector[1]=learners.BucketLearner(displaypanel,10)
+        self.stratselector[1]=guilearners.UCTframe(displaypanel)
         self.stratselector[1].pack(side=tk.LEFT)
 
 

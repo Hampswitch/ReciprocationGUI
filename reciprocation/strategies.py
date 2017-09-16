@@ -15,8 +15,8 @@ def interpolate(s1,s2,p):
     y2 = math.sqrt(1 - s2[0] ** 2) + s2[1]
     try:
         slope=(y2-y1)/(x2-x1)
-    except ValueError:
-        return (s1[1]+s2[1])/2.0
+    except ZeroDivisionError:
+        return x2-math.sqrt(1-p**2)
     intercept=y1-slope*x1
     x3=p
     y3=math.sqrt(1-p**2)
@@ -31,16 +31,31 @@ def interpolate(s1,s2,p):
     y=slope*x+intercept
     return y-y3
 
+def biasedinterpolate(s1,s2,p,b):
+    shift=b*(p-s1[0])/(s2[0]-s1[0])
+    result=interpolate((s1[0],s1[1]+shift),s2,p)
+    return result
+
 class reciprocal:
-    def __init__(self,strat):
+    def __init__(self,strat,bias=None):
         """
         strat is an ordered list of tuples (amount opp gives me,amount I give opponent)
         :param strat:
         """
         self.strat=strat
+        self.bias=bias
 
     def respond(self,oppchoice):
         r=bisect.bisect(self.strat,(oppchoice,None))
-        wt=float(oppchoice-self.strat[r-1][0])/(self.strat[r][0]-self.strat[r-1][0])
-        result=self.strat[r-1][1]*(1-wt)+self.strat[r][1]*wt
-        return result
+        if r==len(self.strat):
+            return math.sqrt(1-oppchoice**2)
+        elif r==0:
+            return self.strat[0][1]
+        else:
+            if self.bias is None:
+                return interpolate(self.strat[r-1],self.strat[r],oppchoice)
+            else:
+                return biasedinterpolate(self.strat[r-1],self.strat[r],oppchoice,self.bias)
+        #wt=float(oppchoice-self.strat[r-1][0])/(self.strat[r][0]-self.strat[r-1][0])
+        #result=self.strat[r-1][1]*(1-wt)+self.strat[r][1]*wt
+        #return result
