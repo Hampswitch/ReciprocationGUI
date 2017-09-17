@@ -5,7 +5,7 @@
 import random
 import bisect
 import math
-import reciprocation.players as players
+import players
 
 class staticstrat:
     def __init__(self,response=0.0):
@@ -130,7 +130,7 @@ print numpy.mean(l)
 print numpy.std(l)
 
 gp=genepool(100,learnerfactory)
-for i in range(10):
+for i in range(100):
     gp.rungeneration()
     print i
     recip=randomlinearstrat()
@@ -139,5 +139,8 @@ for i in range(10):
     for i in range(100):
         l.append(evaluate(recip,player("UCT",False,c=.25),1000,.99))
     print l
+    print recip.stratlist
     print numpy.mean(l)
     print numpy.std(l)
+
+print gp.poolstrat(201)
