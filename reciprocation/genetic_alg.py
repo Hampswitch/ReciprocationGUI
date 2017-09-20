@@ -15,6 +15,30 @@ class staticstrat:
     def respond(self,move):
         return self.response
 
+class regularlinearstrat:
+    def __init__(self,empty=False):
+        if not empty:
+            self.stratlist=[(x,random.random()) for x in [y/100.0-1.0 for y in range(201)]]
+        else:
+            self.stratlist=[]
+
+    def respond(self,move):
+        r=bisect.bisect(self.stratlist,(move,None))
+        w=(move-self.stratlist[r-1][0])/(self.stratlist[r][0]-self.stratlist[r-1][0])
+        return (1-w)*self.stratlist[r-1][1]+w*self.stratlist[r][1]
+
+    def mutate(self,other,rate=.5,mag=1):
+        result=regularlinearstrat(True)
+        result.stratlist=[x for x in self.stratlist]
+        for i in range(len(self.stratlist)):
+            if random.random()<rate:
+                self.stratlist[i]=(self.stratlist[i][0],min(1,max(-1,self.stratlist[i][1]+random.normalvariate(0,mag))))
+        if other is not None:
+            if random.random()<rate*.5:
+                i=random.randint(1,199)
+                result.stratlist=[x for x in result.stratlist[:i]+other.stratlist[i:]]
+        return result
+
 class randomlinearstrat:
     def __init__(self,empty=False):
         if not empty:
@@ -51,6 +75,8 @@ class randomlinearstrat:
         w=(move-self.stratlist[r-1][0])/(self.stratlist[r][0]-self.stratlist[r-1][0])
         return (1-w)*self.stratlist[r-1][1]+w*self.stratlist[r][1]
 
+
+
 def evaluate(strat,learner,iterations,discountfactor=1.0,repetitions=1):
     curdiscount=1.0
     normalize=0.0
@@ -58,12 +84,15 @@ def evaluate(strat,learner,iterations,discountfactor=1.0,repetitions=1):
     move=None
     for j in range(repetitions):
         for i in range(iterations):
-            move=learner.respond(move)
-            score=score+curdiscount*move
-            move=strat.respond(move)
-            score=score+curdiscount*math.sqrt(1-move**2)
-            normalize=normalize+curdiscount
-            curdiscount = curdiscount * discountfactor
+            try:
+                move=learner.respond(move)
+                score=score+curdiscount*move
+                move=strat.respond(move)
+                score=score+curdiscount*math.sqrt(1-move**2)
+                normalize=normalize+curdiscount
+                curdiscount = curdiscount * discountfactor
+            except ValueError:
+                pass
         learner.reset()
         move=None
         curdiscount=1.0
@@ -112,19 +141,23 @@ class learnerfactory:
         return player("UCT",self.radial,**self.kwargs)
 
 class genepool:
-    def __init__(self,poolsize,learnerfactory):
-        self.genepool=[randomlinearstrat() for i in range(poolsize)]
+    def __init__(self,poolsize,learnerfactory,gene=regularlinearstrat):
+        self.genepool=[gene() for i in range(poolsize)]
         self.poolsize=poolsize
         self.discountfactor=.99
         self.learnerfactory=learnerfactory(False,c=.25)
-        self.darwin=math.e
+        self.darwin=10000
+        self.evallength=1000
+        self.evalcount=10
+        self.mutaterate=.5
+        self.mutatemag=1
 
     def rungeneration(self):
-        scores=[evaluate(r,self.learnerfactory.mklearner(),1000,self.discountfactor) for r in self.genepool]
+        scores=[evaluate(r,self.learnerfactory.mklearner(),self.evallength,self.discountfactor,self.evalcount) for r in self.genepool]
         scores=[self.darwin**x for x in scores]
         newpool=[]
         for i in range(self.poolsize):
-            newpool.append(weightedselect(scores,self.genepool).mutate(weightedselect(scores,self.genepool)))
+            newpool.append(weightedselect(scores,self.genepool).mutate(weightedselect(scores,self.genepool),self.mutaterate,self.mutatemag))
         self.genepool=newpool
 
     def poolstrat(self,buckets):
@@ -134,25 +167,59 @@ class genepool:
         return result
 
 import numpy
-l=[]
-for i in range(100):
-    l.append(evaluate(staticstrat(),player("UCT",False,c=.25),1000,.99))
-print l
-print numpy.mean(l)
-print numpy.std(l)
 
-gp=genepool(100,learnerfactory)
-for i in range(100):
-    gp.rungeneration()
-    print i
-    recip=randomlinearstrat()
-    recip.stratlist=gp.poolstrat(20)
+if __name__=="__main__":
     l=[]
     for i in range(100):
-        l.append(evaluate(recip,player("UCT",False,c=.25),1000,.99))
+        l.append(evaluate(staticstrat(),player("UCT",False,c=.25),1000,.99))
     print l
-    print recip.stratlist
     print numpy.mean(l)
     print numpy.std(l)
 
-print gp.poolstrat(201)
+    gp=genepool(100,learnerfactory)
+    gp.darwin=1000000000
+    for i in range(100):
+        gp.rungeneration()
+        print i
+        recip=randomlinearstrat()
+        recip.stratlist=gp.poolstrat(20)
+        l=[]
+        for i in range(100):
+            l.append(evaluate(recip,player("UCT",False,c=.25),1000,.99))
+        print l
+        print recip.stratlist
+        print numpy.mean(l)
+        print numpy.std(l)
+
+    gp.mutatemag=.25
+
+    for i in range(0):
+        gp.rungeneration()
+        print i
+        recip=randomlinearstrat()
+        recip.stratlist=gp.poolstrat(20)
+        l=[]
+        for i in range(100):
+            l.append(evaluate(recip,player("UCT",False,c=.25),1000,.99))
+        print l
+        print recip.stratlist
+        print numpy.mean(l)
+        print numpy.std(l)
+
+    gp.mutatemag=.1
+    gp.evallength=100
+
+    for i in range(0):
+        gp.rungeneration()
+        print i
+        recip=randomlinearstrat()
+        recip.stratlist=gp.poolstrat(20)
+        l=[]
+        for i in range(100):
+            l.append(evaluate(recip,player("UCT",False,c=.25),1000,.99))
+        print l
+        print recip.stratlist
+        print numpy.mean(l)
+        print numpy.std(l)
+
+    print gp.poolstrat(201)
