@@ -200,58 +200,10 @@ def anneal(learner,time,iterations=1000,discountfactor=.99,stratlen=3):
 import numpy
 
 if __name__=="__main__":
-    l=[]
-    for i in range(100):
-        l.append(evaluate(staticstrat(), player("UCT", False, c=.25), 1000, .99))
-    print l
-    print numpy.mean(l)
-    print numpy.std(l)
-
-    gp=genepool(100,learnerfactory,lambda :fixedcountstrat(3))
-    gp.darwin=1000000000
-    for i in range(0):
-        gp.rungeneration()
-        print i
-        recip=randomlinearstrat()
-        recip.stratlist=gp.poolstrat(20)
-        l=[]
-        for i in range(100):
-            l.append(evaluate(recip, player("UCT", False, c=.25), 1000, .99))
-        print l
-        print recip.stratlist
-        print numpy.mean(l)
-        print numpy.std(l)
-
-    gp.mutatemag=.25
-
-    for i in range(0):
-        gp.rungeneration()
-        print i
-        recip=randomlinearstrat()
-        recip.stratlist=gp.poolstrat(20)
-        l=[]
-        for i in range(100):
-            l.append(evaluate(recip, player("UCT", False, c=.25), 1000, .99))
-        print l
-        print recip.stratlist
-        print numpy.mean(l)
-        print numpy.std(l)
-
-    gp.mutatemag=.1
-    gp.evallength=100
-
-    for i in range(0):
-        gp.rungeneration()
-        print i
-        recip=randomlinearstrat()
-        recip.stratlist=gp.poolstrat(20)
-        l=[]
-        for i in range(100):
-            l.append(evaluate(recip, player("UCT", False, c=.25), 1000, .99))
-        print l
-        print recip.stratlist
-        print numpy.mean(l)
-        print numpy.std(l)
-
-    strat=anneal(player("UCT",False,c=16),1000,1000,.99,stratlen=5)
-    print strat
+    result={}
+    for df in [.99,.999,1.0]:
+        for c in [.0625,1.0,16]:
+            strat=anneal(player("UCT",False,c=c),1000,1000,df,stratlen=5)
+            result[(df,c)]=strat
+            logfile=open("Simlog.txt","a")
+            logfile.write(str((df,c))+" "+str(strat)+"\n")
