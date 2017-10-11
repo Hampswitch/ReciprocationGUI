@@ -1,5 +1,5 @@
-import reciprocation.players
-import reciprocation.strategies as strats
+import reciprocation.learningstrategies
+import reciprocation.reciprocatingstrategies as strats
 import reciprocation.guilearners as learners
 import math
 
@@ -13,7 +13,7 @@ for discount in [.9,.999,.9999]:
     for l in learnerparams:
         line=""
         for reciprocal in reciprocalstrats:
-            uct= reciprocation.players.UCTlearner(l)
+            uct= reciprocation.learningstrategies.UCTlearner(l)
             curdiscount=1.0
             recipscore=0.0
             uctscore=0.0

@@ -2,35 +2,18 @@ import math
 import random
 import bisect
 
+
+
 class staticPlayer:
-    def __init__(self):
-        pass
+    def __init__(self,response):
+        self.response=response
 
     def observe(self, move, payoff):
         pass
 
     def pickmove(self):
-        pass
+        return self.response
 
-class reciprocalPlayer:
-    def __init__(self,strat):
-        self.strat=strat
-
-    def observe(self, move, payoff):
-        pass
-
-    def pickmove(self):
-        pass
-
-class player:
-    def __init__(self,radial=False):
-        self.radial=radial
-
-    def observe(self,move,payoff):
-        pass
-
-    def pickmove(self):
-        pass
 
 class BucketUCB:
     def __init__(self):
@@ -94,3 +77,30 @@ class UCTlearner:
             curmin = (curmin + curmax) / 2
             result = curmin + (curmax - curmin) * random.random()
         return result
+
+
+class player:
+    def __init__(self,learner,radial=False,**kwargs):
+        self.radial=radial
+        self.learnertype=learner
+        self.kwargs=kwargs
+        self.reset()
+
+    def respond(self,move):
+        if move is None:
+            self.lastmove=2*random.random()-1
+        else:
+            self.learner.observe(self.lastmove,move+self.lastpayoff)
+            self.lastmove=self.learner.pickmove()
+        if self.radial:
+            self.lastpayoff=math.cos(math.pi*self.lastmove/2.0)
+            return math.sin(math.pi*self.lastmove/2.0)
+        else:
+            self.lastpayoff=math.sqrt(1-self.lastmove**2)
+            return self.lastmove
+
+    def reset(self):
+        if self.learnertype=="UCT":
+            self.learner=UCTlearner(self.kwargs['c'])
+        if self.learnertype=="static":
+            self.learner=staticPlayer(self.kwargs['response'])

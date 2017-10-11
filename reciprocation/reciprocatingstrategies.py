@@ -37,13 +37,19 @@ def biasedinterpolate(s1,s2,p,b):
     return result
 
 class reciprocal:
-    def __init__(self,strat,bias=None):
+    def __init__(self,strat,bias=0):
         """
         strat is an ordered list of tuples (amount opp gives me,amount I give opponent)
         :param strat:
         """
         self.strat=strat
         self.bias=bias
+
+    def __str__(self):
+        return "Reciprocating: "+str(self.strat)
+
+    def __repr__(self):
+        return str(self)
 
     def respond(self,oppchoice):
         r=bisect.bisect(self.strat,(oppchoice,None))
@@ -52,10 +58,10 @@ class reciprocal:
         elif r==0:
             return self.strat[0][1]
         else:
-            if self.bias is None:
+            if self.bias==0:
                 return interpolate(self.strat[r-1],self.strat[r],oppchoice)
-            else:
+            elif self.bias is not None:
                 return biasedinterpolate(self.strat[r-1],self.strat[r],oppchoice,self.bias)
-        #wt=float(oppchoice-self.strat[r-1][0])/(self.strat[r][0]-self.strat[r-1][0])
-        #result=self.strat[r-1][1]*(1-wt)+self.strat[r][1]*wt
-        #return result
+            else:
+                wt=float(oppchoice-self.strat[r-1][0])/(self.strat[r][0]-self.strat[r-1][0])
+                return self.strat[r-1][1]*(1-wt)+self.strat[r][1]*wt
