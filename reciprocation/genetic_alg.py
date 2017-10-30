@@ -9,7 +9,7 @@ import numpy as np
 
 import scipy.stats
 
-from reciprocation.learningstrategies import player
+from learningstrategies import player
 from reciprocatingstrategies import reciprocal
 
 class staticstrat:
@@ -201,8 +201,8 @@ import numpy
 
 if __name__=="__main__":
     result={}
-    for df in [.99,.999,1.0]:
-        for c in [.0625,1.0,16]:
+    for df in [.9,.99,.999,1.0]:
+        for c in [.0625,.25,1.0,4,16]:
             strat=anneal(player("UCT",False,c=c),1000,1000,df,stratlen=5)
             result[(df,c)]=strat
             logfile=open("Simlog.txt","a")
