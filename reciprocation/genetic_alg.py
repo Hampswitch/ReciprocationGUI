@@ -10,7 +10,7 @@ import numpy as np
 import scipy.stats
 
 from learningstrategies import player
-from reciprocatingstrategies import reciprocal
+from teachingstrategies import reciprocal
 
 class staticstrat:
     def __init__(self,response=0.0):
@@ -117,11 +117,17 @@ def evaluate(strat,learner,iterations,discountfactor=1.0,repetitions=1):
         curdiscount=1.0
     return score/normalize
 
+#TODO: save performance records of a given strat - this function returns the generated lists as well as the result, and
+# can accept initial lists
 def compare(strat1,strat2,learner,iterations=1000,discountfactor=1.0,threshhold=.1):
     strat1list=[evaluate(strat1,learner,iterations,discountfactor,1) for i in range(10)]
     strat2list=[evaluate(strat2,learner,iterations,discountfactor,1) for i in range(10)]
     while scipy.stats.ttest_ind(strat1list,strat2list,equal_var=False).pvalue>threshhold and len(strat1list)<1000:
         print len(strat1list)
+        print numpy.mean(strat1list)
+        print numpy.std(strat1list)
+        print numpy.mean(strat2list)
+        print numpy.std(strat2list)
         newstrat1=[evaluate(strat1,learner,iterations,discountfactor,1) for i in range(10)]
         newstrat2=[evaluate(strat2,learner,iterations,discountfactor,1) for i in range(10)]
         strat1list=strat1list+newstrat1
@@ -201,9 +207,13 @@ import numpy
 
 if __name__=="__main__":
     result={}
-    for df in [.9,.99,.999,1.0]:
-        for c in [.0625,.25,1.0,4,16]:
-            strat=anneal(player("UCT",False,c=c),1000,1000,df,stratlen=5)
-            result[(df,c)]=strat
-            logfile=open("Simlog.txt","a")
-            logfile.write(str((df,c))+" "+str(strat)+"\n")
+    print evaluate(reciprocal([(-1,-1),(1,1)],bias=None),player("UCT",False,.5,0,c=4),1000,.99,10)
+    print anneal(player("UCT",False,.5,0,c=4),1000,1000,.99,stratlen=5)
+    if False:
+        for df in [.9,.99,.999,1.0]:
+            for c in [.0625,.25,1.0,4,16]:
+                for e in [0,1]:
+                    strat=anneal(player("UCT",False,e,0,c=c),1000,1000,df,stratlen=5)
+                    result[(df,c,e)]=strat
+                    logfile=open("Simlog.txt","a")
+                    logfile.write(str((df,c,e))+" "+str(strat)+"\n")

@@ -1,5 +1,6 @@
 import bisect
 import math
+import shapely.geometry as sg
 
 def interpolate(s1,s2,p):
     """
@@ -36,8 +37,30 @@ def biasedinterpolate(s1,s2,p,b):
     result=interpolate((s1[0],s1[1]+shift),s2,p)
     return result
 
+class achievableteacher:
+    def __init__(self,achievableset=None,strat=None):
+        if achievableset is not None:
+            self.achievableset=achievableset
+        else:
+            self.achievableset=sg.Polygon(reciprocal(strat).getachievableset(100))
+
+    def __str__(self):
+        return "Achieveable Teacher "+str(self.achievableset)
+
+    def __repr__(self):
+        return str(self)
+
+    def respond(self,oppchoice):
+        oPT=sg.Point(oppchoice,math.sqrt(1-oppchoice**2))
+        availablePoints=oPT.buffer(1)
+        acceptablepoints=availablePoints.intersection(self.achievableset)
+        return acceptablepoints.bounds[3]
+
+    def getachievableset(self):
+        return self.achievableset
+
 class reciprocal:
-    def __init__(self,strat,bias=0):
+    def __init__(self,strat,bias=None):
         """
         strat is an ordered list of tuples (amount opp gives me,amount I give opponent)
         :param strat:
@@ -65,3 +88,24 @@ class reciprocal:
             else:
                 wt=float(oppchoice-self.strat[r-1][0])/(self.strat[r][0]-self.strat[r-1][0])
                 return self.strat[r-1][1]*(1-wt)+self.strat[r][1]*wt
+
+    def getachievableset(self,pointcount=100):
+        result=[]
+        for i in range(pointcount):
+            a=i*2*math.pi/pointcount
+            opp_c_opp=math.sin(a)
+            opp_c_me=math.cos(a)
+            me_c_opp=self.respond(opp_c_me)
+            me_c_me=math.sqrt(1-me_c_opp**2)
+            result.append((opp_c_opp+me_c_opp,opp_c_me+me_c_me))
+        return result
+
+    def compare(self,other,pointcount=360):
+        s1=sg.Polygon(self.getachievableset(pointcount))
+        s2=sg.Polygon(other.getachievableset(pointcount))
+        result=0
+        for p in s1.boundary.coords:
+            result=max(result,sg.Point(p).distance(s2))
+        for p in s2.boundary.coords:
+            result=max(result,sg.Point(p).distance(s1))
+        return result

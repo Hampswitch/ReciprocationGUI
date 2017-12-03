@@ -1,6 +1,6 @@
 import Tkinter as tk
 import math
-import reciprocatingstrategies
+import teachingstrategies
 import ScrolledText
 from genetic_alg import evaluate,randomlinearstrat,learnerfactory
 
@@ -43,8 +43,11 @@ genetic_strats={
     "SA6":[(-1, -0.6901005272871066), (-0.4220071135736216, -0.9762653302594961), (0.6613963585132069, -0.7368586064287893), (1, 0.4283360821883739), (1, 0.8732820665919451)],
     "SA7":[(-1, -0.9697303020032875), (-0.06479807359309031, -0.972393443538577), (0.6932428387116264, -0.6674612560210156), (0.9996259610763141, 0.40980316943368605), (1, 0.6998393529486997)],
     "sa1":[(-1, -0.2282263019642403), (-0.20262371493875334, -0.14552811599372545), (0.5571450711912667, 0.2563942509062074), (0.6491934786730705, 0.20125589075813985), (1, 0.2877620382142376)],
-    "sa2":[(-1, -1), (-1, -0.3203937980510373), (-0.5031774434846751, -0.19949336389736794), (0.9742414184756261, 0.3349519480617902), (1, 0.5009106200637778)]
-
+    "sa2":[(-1, -1), (-1, -0.3203937980510373), (-0.5031774434846751, -0.19949336389736794), (0.9742414184756261, 0.3349519480617902), (1, 0.5009106200637778)],
+    "sa99-0625": [(-1, -0.5335618127829531), (-0.3864916902057596, -0.9936482429274706), (0.4359798344603937, -0.8965711028118669), (0.9052540034331962, -0.2894804281101017), (1, 0.23374852431726068)],
+    "sa99-1": [(-1, -0.8499430443939117), (-0.48473916372530507, -0.9843077611449556), (0.40214434332375454, -0.8109411901473174), (0.8321256913364924, 0.4534539982469439), (1, 0.4964773978032996)],
+    "sa99-16": [(-1, -0.13208948846981824), (-0.9979088837637492, 0.7306485695650007), (-0.9977703303991294, 0.5412062939185166), (-0.9958806861835311, -0.32658720456404394), (1, 0.31229257313755415)],
+    "sa999-0625": [(-1, -0.6707137852097197), (-1, -0.3750198004313156), (-0.04097989502260411, -0.9994063605423916), (0.844999653543815, -0.3974510571820752), (1, 0.2551580809275928)]
 
 }
 
@@ -79,7 +82,7 @@ class ReciprocalStrategySelector(tk.Frame):
         buttonpanel.pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Clear", command=self.__clear).pack(side=tk.LEFT)
         self.stratlist = []
-        self.bias=None
+        self.bias=0.0
         for s in preset_strats.keys():
             tk.Button(buttonpanel, text=s,command=(lambda x: lambda: self.loadstrat(x,"preset"))(s)).pack(side=tk.LEFT)
         buttonpanel = tk.Frame(self)
@@ -146,9 +149,9 @@ class ReciprocalStrategySelector(tk.Frame):
                 if self.bias is None:
                     yo=b*first[1]+(1-b)*second[1]
                 elif self.bias==0:
-                    yo = reciprocatingstrategies.interpolate(first, second, b * first[0] + (1 - b) * second[0])
+                    yo = teachingstrategies.interpolate(first, second, b * first[0] + (1 - b) * second[0])
                 else:
-                    yo = reciprocatingstrategies.biasedinterpolate(first, second, b * first[0] + (1 - b) * second[0], self.bias)
+                    yo = teachingstrategies.biasedinterpolate(first, second, b * first[0] + (1 - b) * second[0], self.bias)
                 self.add_display_dot(xp + math.sqrt(1 - yo * yo), math.sqrt(1 - xp * xp) + yo, tags="dots", fill="blue")
                 self.add_input_dot(xp,yo,tags="filldots")
         self.suffixstrat = []
@@ -170,7 +173,7 @@ class ReciprocalStrategySelector(tk.Frame):
         return self.prefixstrat + self.stratlist + self.suffixstrat
 
     def getResponse(self,move):
-        strat=reciprocatingstrategies.reciprocal(self.stratlist, self.bias).respond(move)
+        strat=teachingstrategies.reciprocal(self.stratlist, self.bias).respond(move)
         return strat
 
     def evaluate(self):

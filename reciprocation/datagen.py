@@ -1,5 +1,5 @@
 import reciprocation.learningstrategies
-import reciprocation.reciprocatingstrategies as strats
+import reciprocation.teachingstrategies as strats
 import reciprocation.guilearners as learners
 import math
 

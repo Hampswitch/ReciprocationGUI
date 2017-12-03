@@ -2,7 +2,41 @@ import math
 import random
 import bisect
 
+class fastlearner:
+    def __init__(self):
+        self.moves=[0,.25,.5,.75,1]
+        self.payoffs=[None,None,None,None,None]
 
+    def observe(self,move,payoff):
+        self.payoffs[self.moves.index(move)]=payoff
+
+    def pickmove(self):
+        if None not in self.payoffs:
+            self.zoom()
+        return self.moves[self.payoffs.index[None]]
+
+    def zoom(self):
+        pmax=max(self.payoffs)
+        i=self.payoffs.index(pmax)
+        newpayoffs=[None,None,None,None,None]
+        if i==0:
+            newmin=self.moves[0]
+            newmax=self.moves[1]
+            newpayoffs[0]=self.payoffs[0]
+            newpayoffs[4]=self.payoffs[1]
+        elif i==4:
+            newmin=self.moves[3]
+            newmax=self.moves[4]
+            newpayoffs[0]=self.payoffs[3]
+            newpayoffs[4]=self.payoffs[4]
+        else:
+            newmin=self.moves[i-1]
+            newmax=self.moves[i+1]
+            newpayoffs[0]=self.payoffs[i-1]
+            newpayoffs[2]=self.payoffs[i]
+            newpayoffs[4]=self.payoffs[i+1]
+        self.moves=[newmin,(3*newmin+newmax)/4.0,(newmin+newmax)/2.0,(newmin+3*newmax)/4.0,newmax]
+        self.payoffs=newpayoffs
 
 class staticPlayer:
     def __init__(self,response):
@@ -79,10 +113,18 @@ class UCTlearner:
         return result
 
 
+def getpayoff(p1,p2,envy,fairness):
+    if p2>p1:
+        return p1-envy*(p2-p1)
+    else:
+        return p1-fairness*(p1-p2)
+
 class player:
-    def __init__(self,learner,radial=False,**kwargs):
+    def __init__(self,learner,radial=False,envy=0,fairness=0,**kwargs):
         self.radial=radial
         self.learnertype=learner
+        self.envy=envy
+        self.fairness=fairness
         self.kwargs=kwargs
         self.reset()
 
@@ -90,13 +132,13 @@ class player:
         if move is None:
             self.lastmove=2*random.random()-1
         else:
-            self.learner.observe(self.lastmove,move+self.lastpayoff)
+            self.learner.observe(self.lastmove,getpayoff(move+self.lastpayoff[0],math.sqrt(1-move**2)+self.lastpayoff[1],self.envy,self.fairness))
             self.lastmove=self.learner.pickmove()
         if self.radial:
-            self.lastpayoff=math.cos(math.pi*self.lastmove/2.0)
+            self.lastpayoff=(math.cos(math.pi*self.lastmove/2.0),math.sin(math.pi*self.lastmove/2.0))
             return math.sin(math.pi*self.lastmove/2.0)
         else:
-            self.lastpayoff=math.sqrt(1-self.lastmove**2)
+            self.lastpayoff=(math.sqrt(1-self.lastmove**2),self.lastmove)
             return self.lastmove
 
     def reset(self):
@@ -104,3 +146,5 @@ class player:
             self.learner=UCTlearner(self.kwargs['c'])
         if self.learnertype=="static":
             self.learner=staticPlayer(self.kwargs['response'])
+        if self.learnertype=="fast":
+            self.learner=fastlearner()
