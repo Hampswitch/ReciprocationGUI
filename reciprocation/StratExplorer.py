@@ -23,10 +23,13 @@ class functioncontrol(tk.Frame):
         self.displaycanvas.bind("<ButtonRelease-1>", self.__mouseup)
         self.displaycanvas.bind("<Control-Button-1>", self.__ctrlmouseclick)
         self.displaycanvas.bind("<B1-Motion>",self.__mousemove)
-        self.displaycanvas.create_line(5,205,205,5)
-        self.displaycanvas.create_line(105,5,105,205)
-        self.displaycanvas.create_line(55,5,55,205)
-        self.displaycanvas.create_line(155,5,155,205)
+        self.displaycanvas.create_line(5,205,205,5,fill="light grey")
+        self.displaycanvas.create_line(105,5,105,205,fill="grey")
+        self.displaycanvas.create_line(55,5,55,205,fill="light grey")
+        self.displaycanvas.create_line(155,5,155,205,fill="light grey")
+        self.displaycanvas.create_line(5,55,205,55,fill="light grey")
+        self.displaycanvas.create_line(5,105,205,105,fill="grey")
+        self.displaycanvas.create_line(5,155,205,155,fill="light grey")
         self.pointlist=pointlist
         if self.pointlist is None:
             self.pointlist=[]
@@ -93,15 +96,26 @@ class functioncontrol(tk.Frame):
             self.pointlist=backup
 
 class giftDisplay(tk.Frame):
-    def __init__(self,master):
+    def __init__(self,master,command=None):
         tk.Frame.__init__(self,master)
         self.displaycanvas=tk.Canvas(self, width=410, height=410, borderwidth=1, relief=tk.RAISED, background="white")
-        self.displaycanvas.create_oval(5,5,405,405)
-        self.displaycanvas.create_oval(105,105,305,305)
+        self.displaycanvas.create_oval(5,5,405,405,outline="grey")
+        self.displaycanvas.create_oval(105,105,305,305,outline="grey")
+        self.displaycanvas.create_line(5,205,405,205,fill="grey")
+        self.displaycanvas.create_line(5, 105, 405, 105, fill="light grey")
+        self.displaycanvas.create_line(5, 305, 405, 305, fill="light grey")
+        self.displaycanvas.create_line(205, 5, 205, 405, fill="grey")
+        self.displaycanvas.create_line(105, 5, 105, 405, fill="light grey")
+        self.displaycanvas.create_line(305, 5, 305, 405, fill="light grey")
         self.displaycanvas.pack(side=tk.TOP)
-        self.stratcontrol=functioncontrol(self)
+        tk.Label(self,text="Opponent Move").pack(side=tk.TOP)
+        self.oppmove=tk.Scale(self, from_=-1, to=1, resolution=.01,orient=tk.HORIZONTAL,length=200,command=command)
+        self.oppmove.pack(side=tk.TOP)
+        tk.Label(self,text="Response Function").pack(side=tk.TOP)
+        self.strat=teachingstrategies.simpleteacher(.95,-.8,-.9)
+        self.stratcontrol=functioncontrol(self,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)])
         self.stratcontrol.pack(side=tk.TOP)
-        self.strat=teachingstrategies.reciprocal([(-1, -1), (1, 1)])
+
 
     def _getstrat(self):
         result=self.stratcontrol.pointlist
@@ -139,6 +153,14 @@ class giftDisplay(tk.Frame):
             pcoords.append(x)
             pcoords.append(y)
         self.displaycanvas.create_polygon(pcoords,fill="grey",tags="pref",width=1,outline="black")
+        m=self.oppmove.get()
+        r=strat.respond(m)
+        (x,y)=toCanvas(m,math.sqrt(1-m**2),400)
+        self.displaycanvas.create_oval(x-2,y-2,x+2,y+2,fill="red",tags="pref")
+        (x,y)=toCanvas(math.sqrt(1-r**2),r,400)
+        self.displaycanvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill="green",tags="pref")
+        (x,y)=toCanvas(m+math.sqrt(1-r**2),r+math.sqrt(1-m**2),400)
+        self.displaycanvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill="yellow",tags="pref")
 
 class stratexplorer(tk.Frame):
     def __init__(self,master):
@@ -161,7 +183,7 @@ class stratexplorer(tk.Frame):
         self.xenvy.set(0)
         self.xenvy.pack(side=tk.TOP)
         tk.Label(leftprefs, text="Envy").pack(side=tk.TOP)
-        self.display=giftDisplay(self)
+        self.display=giftDisplay(self,lambda x:self.__showprefs())
         self.display.pack(side=tk.LEFT)
         self.display.stratcontrol.command=self.__showprefs
         rightprefs=tk.Frame(self)

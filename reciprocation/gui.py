@@ -1,31 +1,32 @@
 import Tkinter as tk
 import controls
 import math
-import guilearners
-
-
+import learningstrategies as ls
+import teachingstrategies as ts
+import datagen
 
 class gametracker(tk.Frame):
-    def __init__(self,master,curplayer=0,curmove=0):
+    def __init__(self,master,curplayer=0):
         self.curplayer=curplayer
-        self.curmove=curmove
+
         tk.Frame.__init__(self,master)
         displaypanel = tk.Frame(self)
         displaypanel.pack(side=tk.TOP)
         self.stratselector=[None,None]
         self.stratselector[0] = controls.ReciprocalStrategySelector(displaypanel)
+        #self.stratselector[0]=controls.textlearner(displaypanel,ts.achievableteacher(achievableset=datagen.fairset))
         self.stratselector[0].pack(side=tk.LEFT)
 
-        self.gamedisp = controls.GameDisplay(displaypanel,discount=.01)
+        self.gamedisp = controls.GameDisplay(displaypanel,discount=0)
         self.gamedisp.pack(side=tk.LEFT)
 
         #self.stratselector[1] = controls.ReciprocalStrategySelector(displaypanel)
         #self.stratselector[1] = learners.Static(displaypanel)
         #self.stratselector[1]=learners.BucketLearner(displaypanel,10)
-        self.stratselector[1]=guilearners.UCTframe(displaypanel)
+        self.stratselector[1]=controls.textlearner(displaypanel,ls.player("UCT",c=1))
         self.stratselector[1].pack(side=tk.LEFT)
 
-
+        self.curmove = self.stratselector[self.curplayer].getResponse(None)
 
         controlpanel = tk.Frame(self)
         controlpanel.pack(side=tk.TOP)
