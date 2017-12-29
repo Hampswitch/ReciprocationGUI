@@ -1,6 +1,7 @@
 import bisect
 import math
 import shapely.geometry as sg
+import random
 import reciprocation.utils as utils
 
 def interpolate(s1,s2,p):
@@ -121,34 +122,60 @@ class achievableteacher:
         return "Achievable Set Status"
 
 class simpleteacher:
-    def __init__(self,threshhold,zeroresponse,negoneresponse):
-        self.threshhold=threshhold
-        self.zeroresponse=zeroresponse
-        if 1+zeroresponse>2*math.sqrt(1-threshhold**2):
-            raise ValueError("Threshhold not best response for opponent")
-        self.negoneresponse=negoneresponse
-        if negoneresponse>1+self.zeroresponse:
-            raise ValueError("Opponent motivated to punish")
+    def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None):
+        if threshhold is None:
+            self.threshhold=random.random()
+            self.zeroresponse=random.uniform(-1,min(0,2*math.sqrt(1-self.threshhold**2)-1))
+            self.negoneresponse=random.uniform(-1,1+self.zeroresponse)
+        else:
+            self.threshhold=threshhold
+            self.zeroresponse=zeroresponse
+            if 1+zeroresponse-.0001>2*math.sqrt(1-threshhold**2):
+                raise ValueError("Threshhold not best response for opponent")
+            self.negoneresponse=negoneresponse
+            if negoneresponse-.0001>1+self.zeroresponse:
+                raise ValueError("Opponent motivated to punish")
+        if startmove is None:
+            self.startmove=self.threshhold
+        else:
+            self.startmove=startmove
+        self.irrationalopponent=False
 
     def __str__(self):
-        return str((self.threshhold,self.zeroresponse,self.negoneresponse))
+        return "Simple Teacher: "+str((self.threshhold,self.zeroresponse,self.negoneresponse))
 
     def __repr__(self):
         return str(self)
 
     def respond(self,oppchoice):
+        if oppchoice is None:
+            return self.startmove
         if oppchoice>=self.threshhold:
-            return math.sqrt(1-oppchoice**2)
+            if self.irrationalopponent:
+                return math.sqrt(1-oppchoice**2)
+            else:
+                return math.sqrt(1-self.threshhold**2)
         if oppchoice>=0:
             return interpolate((0,self.zeroresponse),(self.threshhold,math.sqrt(1-self.threshhold**2)),oppchoice)
         return interpolate((-1,self.negoneresponse),(0,self.zeroresponse),oppchoice)
 
+    def perturb(self,mag):
+        newthreshhold=max(-1,min(1,self.threshhold+random.normalvariate(0,mag)))
+        newzeroresponse=max(-1,min(2*math.sqrt(1-newthreshhold**2)-1,self.zeroresponse+random.normalvariate(0,mag)))
+        newnegoneresponse=max(-1,min(1,1+newzeroresponse,self.negoneresponse+random.normalvariate(0,mag)))
+        return simpleteacher(newthreshhold,newzeroresponse,newnegoneresponse)
+
     def getDescription(self):
         return "Simple Teacher\n  Threshhold: %.3f\n  Zero Response: %.3f\n"
 
+    def reset(self):
+        pass
+
+def stratperturb(val,amt):
+    return max(-1,min(1,val+random.normalvariate(0,amt)))
 
 class reciprocal:
-    def __init__(self,strat,bias=None,startmove=0):
+    def __init__(self,strat,bias=None,startmove=0,perturb_type="simul"):
         """
         strat is an ordered list of tuples (amount opp gives me,amount I give opponent)
         :param strat:
@@ -156,6 +183,7 @@ class reciprocal:
         self.strat=strat
         self.bias=bias
         self.startmove=startmove
+        self.perturb_type=perturb_type
 
     def __str__(self):
         return "Reciprocating: "+str(self.strat)
@@ -182,6 +210,23 @@ class reciprocal:
             else:
                 wt=float(oppchoice-self.strat[r-1][0])/(self.strat[r][0]-self.strat[r-1][0])
                 return self.strat[r-1][1]*(1-wt)+self.strat[r][1]*wt
+
+    def perturb(self,mag):
+        if self.perturb_type=="simul":
+            perturbstrat=[(-1,stratperturb(self.strat[0][1],mag))]+\
+                 [(stratperturb(s[0],mag),stratperturb(s[1],mag)) for s in self.strat[1:-1]]+\
+                 [(1,stratperturb(self.strat[-1][1],mag))]
+        elif self.perturb_type=="single":
+            perturbstrat=[x for x in self.strat]
+            i=random.randint(0,len(self.strat)-1)
+            if i==0 or i==len(self.strat)-1:
+                perturbstrat[i]=(perturbstrat[i][0],stratperturb(perturbstrat[i][1],mag))
+            else:
+                perturbstrat[i]=(stratperturb(perturbstrat[i][0],mag),stratperturb(perturbstrat[i][1],mag))
+        else:
+            raise ValueError("unrecognized perturb type: "+str(self.perturb_type))
+        perturbstrat.sort()
+        return reciprocal(perturbstrat,self.bias,self.startmove,self.perturb_type)
 
     def getachievableset(self,pointcount=100):
         """

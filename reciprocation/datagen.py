@@ -22,6 +22,7 @@ greedyset=learners.getacceptableset(greedystrat)
 generousset=learners.getacceptableset(generousstrat)
 fairset=learners.getacceptableset(fairstrat)
 
+"""
 competitorlist1=[strats.reciprocal(greedystrat,startmove=.198),strats.reciprocal(generousstrat,startmove=.7),strats.reciprocal(fairstrat,startmove=.7),
                  strats.achievableteacher(greedyset,startmove=.198),strats.achievableteacher(generousset,startmove=.7),strats.achievableteacher(fairset,startmove=.7),
                  strats.achievableteacher(greedyset,average=True,startmove=.198),strats.achievableteacher(generousset,average=True,startmove=.7),strats.achievableteacher(fairset,average=True,startmove=.7),
@@ -31,6 +32,33 @@ competitorlist2=[strats.reciprocal(greedystrat),strats.reciprocal(generousstrat)
                  strats.achievableteacher(greedyset),strats.achievableteacher(generousset),strats.achievableteacher(fairset),
                  strats.achievableteacher(greedyset,average=True),strats.achievableteacher(generousset,average=True),strats.achievableteacher(fairset,average=True),
                  learners.player("UCT",c=1),learners.player("UCT",c=1,acceptableset=greedyset),learners.player("UCT",c=1,acceptableset=generousset),learners.player("UCT",c=1,acceptableset=fairset),learners.player("UCT",c=1,envy=.5,fairness=0)]
+"""
+
+
+competitornamelist=["UCT","Greedy","Fair","Generous","UCT-Greedy-Low","UCT-Greedy-Med","UCT-Greedy-High","UCT-Fair-Low","UCT-Fair-Med","UCT-Fair-High",
+                    "UCT-Generous-Low","UCT-Generous-Med","UCT-Generous-High"]
+
+competitorlist1=[learners.player("UCT",c=1),strats.reciprocal(greedystrat),strats.reciprocal(generousstrat),strats.reciprocal(fairstrat),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(greedystrat), teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(greedystrat), teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(greedystrat), teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(fairstrat), teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(fairstrat), teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(fairstrat), teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=2)]
+
+competitorlist2=[learners.player("UCT",c=1),strats.reciprocal(greedystrat),strats.reciprocal(generousstrat),strats.reciprocal(fairstrat),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(greedystrat), teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(greedystrat), teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(greedystrat), teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(fairstrat), teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(fairstrat), teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(fairstrat), teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=2)]
 
 if __name__=="__main__":
     resultdict={}
@@ -46,8 +74,8 @@ if __name__=="__main__":
 
     print resultdict
 
-    meanfile=open("meandata.csv","w")
-    stdfile=open("stddata.csv","w")
+    meanfile=open("meandataTW.csv","w")
+    stdfile=open("stddataTW.csv","w")
     meanfile.write(","+",".join(competitornamelist)+"\n")
     stdfile.write(","+",".join(competitornamelist)+"\n")
     for n1 in competitornamelist:

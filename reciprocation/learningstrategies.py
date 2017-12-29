@@ -92,16 +92,20 @@ class UCTlearner:
                 curmax = (curmin + curmax) / 2
         curnode[nextnode] = [1, payoff, None, None]
 
-    def pickmove(self,c=None,extradata=False):
+    def pickmove(self,c=None,extradata=False,tmove=None,twt=None):
         if c is None:
             c=self.C
         curnode = self.data
         curmin = -1.0
         curmax = 1.0
         while curnode[2] is not None and curnode[3] is not None:
-            if (curnode[2][1] / curnode[2][0] + c * math.sqrt(2 * math.log(curnode[0]) / curnode[2][0]) >
-                            curnode[3][1] / curnode[3][0] + c * math.sqrt(
-                                2 * math.log(curnode[0]) / curnode[3][0])):
+            if (curnode[2][1] / curnode[2][0] +
+                        c * math.sqrt(2 * math.log(curnode[0]) / curnode[2][0]) +
+                    (twt if (twt is not None) and (tmove>curmin) and (tmove < (curmin+curmax)/2) else 0.0)
+                    >
+                            curnode[3][1] / curnode[3][0] +
+                            c * math.sqrt(2 * math.log(curnode[0]) / curnode[3][0]) +
+                    (twt if (twt is not None) and (tmove<curmax) and (tmove >(curmin+curmax)/2) else 0.0)):
                 curnode = curnode[2]
                 curmax = (curmin + curmax) / 2
             else:
@@ -137,7 +141,8 @@ def getacceptableset(strat):
     return baseset
 
 class player:
-    def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,acceptableset=None,distpenalty=100,**kwargs):
+    def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,acceptableset=None,distpenalty=100,
+                 teachingstrat=None,teachingweight=None,**kwargs):
         self.radial=radial
         self.learnertype=learner
         self.envy=envy
@@ -150,6 +155,8 @@ class player:
         self.reset()
         self.lastmove = None
         self.statusmessage="No data received yet"
+        self.teachingstrat=teachingstrat
+        self.teachingweight=teachingweight
 
     def respond(self,move):
         """
@@ -182,7 +189,11 @@ class player:
             else:
                 payoff=mypayoff
             self.learner.observe(self.lastmove,payoff)
-            self.lastmove=self.learner.pickmove()
+            if self.teachingstrat is not None:
+                teachingresponse=self.teachingstrat.respond(move)
+                self.lastmove=self.learner.pickmove(tmove=teachingresponse,twt=self.teachingweight)
+            else:
+                self.lastmove=self.learner.pickmove()
             self.statusmessage="Observed "+str(move)+"\nEvaluated payoff of last move as "+str(payoff)+"\nPicked response "+str(self.lastmove)
         if self.radial:
             self.lastpayoff=(math.cos(math.pi*self.lastmove/2.0),math.sin(math.pi*self.lastmove/2.0))

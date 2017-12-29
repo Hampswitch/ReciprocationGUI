@@ -10,7 +10,7 @@ import numpy as np
 import scipy.stats
 
 from learningstrategies import player
-from teachingstrategies import reciprocal
+from teachingstrategies import reciprocal,simpleteacher
 
 class staticstrat:
     def __init__(self,response=0.0):
@@ -189,8 +189,8 @@ class genepool:
 def comparestrats(strat1,strat2,learner):
     sample1=[evaluate()]
 
-def anneal(learner,time,iterations=1000,discountfactor=.99,stratlen=3,perturb_sched=None,threshhold_sched=None,perturb_type="simul"):
-    strat=reciprocal(sorted([(-1,2*random.random()-1)]+[(2*random.random()-1,2*random.random()-1) for i in range(stratlen-2)]+[(1,2*random.random()-1)]),bias=None)
+def anneal(learner,time,strat,iterations=1000,discountfactor=.99,perturb_sched=None,threshhold_sched=None):
+    #strat=reciprocal(sorted([(-1,2*random.random()-1)]+[(2*random.random()-1,2*random.random()-1) for i in range(stratlen-2)]+[(1,2*random.random()-1)]),bias=None)
     performrecord=[]
     if threshhold_sched is None:
         threshhold_sched=[.5*(1-3.0/time)**(2*t) for t in range(time)]
@@ -199,20 +199,7 @@ def anneal(learner,time,iterations=1000,discountfactor=.99,stratlen=3,perturb_sc
     for t in range(time):
         threshhold=threshhold_sched[t]
         mag=perturb_sched[t]
-        if perturb_type=="simul":
-            perturbstrat=[(-1,stratperturb(strat.strat[0][1],mag))]+\
-                 [(stratperturb(s[0],mag),stratperturb(s[1],mag)) for s in strat.strat[1:-1]]+\
-                 [(1,stratperturb(strat.strat[-1][1],mag))]
-        elif perturb_type=="single":
-            perturbstrat=[x for x in strat.strat]
-            i=random.randint(0,stratlen-1)
-            if i==0 or i==stratlen-1:
-                perturbstrat[i]=(perturbstrat[i][0],stratperturb(perturbstrat[i][1],mag))
-            else:
-                perturbstrat[i]=(stratperturb(perturbstrat[i][0],mag),stratperturb(perturbstrat[i][1],mag))
-        else:
-            raise ValueError("unrecognized perturb type: "+str(perturb_type))
-        newstrat=reciprocal(sorted(perturbstrat),bias=None)
+        newstrat=strat.perturb(mag)
         print str(t)+"========================================"
         print threshhold
         print strat
@@ -232,33 +219,42 @@ if __name__=="__main__":
     strats=[]
     dist={}
     maxdist=0
-    """
-    for i in range(10):
-        results.append(anneal(player("UCT",False,c=1),500,1000,.99,stratlen=5,perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)]))
-        strats.append(results[-1][0])
-    print results
-    """
-    strats.append(reciprocal([(-1, -0.7794639575615129), (-0.8446552157500906, -0.9896224573935959), (-0.04203693688186024, -0.9170200514502815), (0.3510608848208704, -0.8159345253619382), (1, 0.7048261170971563)]))
-    strats.append(reciprocal([(-1, -0.820658850873681), (-0.9388296377056126, -0.9475976296106516), (0.39143535047383404, -0.8419787806513155), (0.8514087018229608, 0.48877226280432395), (1, 0.4515249795430891)]))
-    strats.append(reciprocal([(-1, -0.9134345719749818), (0.4236175836682907, -0.8845488376033471), (0.8153289047375804, 0.3626214924362167), (0.8369542361652093, 0.45564112596765494), (1, 0.4648647308904554)]))
-    strats.append(reciprocal([(-1, 0.04101252498194046), (-0.9920970530580304, -0.9641914753664058), (0.37030288569952624, -0.9146097201275217), (0.9062984897655945, 0.5660902361348822), (1, 0.4421778147539235)]))
-    strats.append(reciprocal([(-1, -0.9761349715775307), (-1, 0.21923177138019725), (-0.9797380734730485, -0.9321715037263696), (0.3241511270453441, -0.9186960314771592), (1, 0.709389210142102)]))
-    strats.append(reciprocal([(-1, -0.9047392502040277), (0.3525119702543211, -0.9181975671072078), (0.6985114441189911, -0.10327305598856962), (0.8178454560344496, 0.46275687119636416), (1, 0.3310036970940886)]))
-    strats.append(reciprocal([(-1, -0.8584055212210779), (-0.6585442602967201, -0.9768594500573419), (0.36302843670396673, -0.8518667778347204), (1, 0.6996845288050685), (1, 0.8219028705047451)]))
-    strats.append(reciprocal([(-1, -1), (-1, -0.2767464783899173), (-0.9955157381714942, -0.9246701029640717), (0.309194893708672, -0.9249738025093096), (1, 0.7129284207038739)]))
-    strats.append(reciprocal([(-1, -0.9148413563693988), (-0.967102262946209, -0.9760318823830801), (0.3069104761628629, -0.9122988313592347), (1, 0.6990700452520512), (1, 0.9404837736925028)]))
-    strats.append(reciprocal([(-1, -0.9414330936956736), (-0.11795087245717331, -0.9600000247048686), (0.32690024189074407, -0.823531271290028), (1, 0.701988006876726), (1, 0.9893988199875637)]))
 
     for i in range(10):
-        for j in range(10):
-            dist[(i,j)]=strats[i].compare(strats[j])
-            if dist[(i,j)]>maxdist:
-                maxdist=dist[(i,j)]
+        results.append(anneal(player("UCT",False,c=1),500,simpleteacher(),1000,.99,
+                              perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)]))
+        strats.append(results[-1][0])
+    print results
+
+    """
+Simple Teacher: (0.877978879300523, -0.8642673549007216, -0.9520677711799796)
+Simple Teacher: (0.8819598422232935, -0.8558368240439798, -0.9626376472554382)
+Simple Teacher: (0.8786368092426146, -0.8623209184868226, -0.9494024237956031)
+Simple Teacher: (0.880279705092866, -0.8507356385079773, -0.9790697270151719)
+Simple Teacher: (0.8733445995305894, -0.8311034483635887, -0.949140735647848)
+Simple Teacher: (0.8772967553897715, -0.874152125100528, -0.951662055119044)
+Simple Teacher: (0.8763642507272033, -0.8685761940951058, -0.9577378720458308)
+Simple Teacher: (0.8745482804698607, -0.8370921118343472, -0.9251541357172802)
+Simple Teacher: (0.8795071556744438, -0.8412843566485515, -0.9811061212782386)
+Simple Teacher: (0.8774827464803999, -0.8595752246025835, -1)
+
+After making it threshhold-generous
+Simple Teacher: (0.8796545042841102, -0.8751184018754128, -0.9751956606849748)
+Simple Teacher: (0.8785552354338813, -0.8554392149687146, -0.9660367593243538)
+Simple Teacher: (0.8712410883191994, -0.8176849173840018, 0.006725856059368868)
+Simple Teacher: (0.8737455954006589, -0.8568302777945868, -0.9578766667937124)
+Simple Teacher: (0.8811000653817532, -0.8607620957775671, -0.9794922244918083)
+Simple Teacher: (0.8808548022008825, -0.8574539657560081, -0.9637182602518872)
+Simple Teacher: (0.8765634659397239, -0.8607459335235632, -0.9785310778701708)
+Simple Teacher: (0.8826317296617158, -0.8616230586995601, -0.9605763169106329)
+Simple Teacher: (-1, -1, -1)
+Simple Teacher: (-1, -1, -0.33219942288071364)
+
+
+    """
 
     print results
     print strats
-    print dist
-    print maxdist
 
 if __name__=="mkdata":
     result={}
