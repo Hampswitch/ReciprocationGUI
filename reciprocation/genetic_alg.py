@@ -231,7 +231,7 @@ if __name__=="__main__":
                          run_length,discountfactor,perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)])[0]
             result.loc[(i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor),
                        ("agent_c","agent_threshhold","agent_zero","agent_negone","agent_tweight")]=(strat.kwargs["c"],strat.teachingstrat.threshhold,strat.teachingstrat.zeroresponse,strat.teachingstrat.negoneresponse,strat.teachingweight)
-    result.to_csv("TLanneal.csv")
+        result.to_csv("TLanneal.csv")
     """
     results=[]
     strats=[]

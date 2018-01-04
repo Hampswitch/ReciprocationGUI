@@ -112,7 +112,7 @@ class giftDisplay(tk.Frame):
         self.oppmove=tk.Scale(self, from_=-1, to=1, resolution=.01,orient=tk.HORIZONTAL,length=200,command=command)
         self.oppmove.pack(side=tk.TOP)
         tk.Label(self,text="Response Function").pack(side=tk.TOP)
-        self.strat=teachingstrategies.simpleteacher(99.0/101,-1,-.5)
+        self.strat=teachingstrategies.simpleteacher(.95,-1,-1)
         self.stratcontrol=functioncontrol(self,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)])
         self.stratcontrol.pack(side=tk.TOP)
 

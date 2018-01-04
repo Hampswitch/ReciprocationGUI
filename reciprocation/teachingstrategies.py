@@ -34,7 +34,10 @@ def interpolate(s1,s2,p):
         return (1-b)*s1[1]+b*s2[1]
     y=slope*x+intercept
     y=min(max(y1,y2),y)
-    return y-y3
+    result=y-y3
+    result=max(min(s1[1],s2[1]),result)
+    result=min(max(s1[1],s2[1]),result)
+    return result
 
 
 def biasedinterpolate(s1,s2,p,b):
