@@ -68,6 +68,9 @@ class UCTlearner:
         self.data=[0,0,None,None]
         self.C=c
 
+    def __str__(self):
+        return "UCT ("+str(self.C)+")"
+
     def observe(self,move,payoff):
         curnode = self.data
         curnode[0] += 1
@@ -141,7 +144,8 @@ def getacceptableset(strat):
     return baseset
 
 class player:
-    def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,acceptableset=None,distpenalty=100,
+    def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,acceptableset=None,
+                 distpenalty=100,
                  teachingstrat=None,teachingweight=None,**kwargs):
         self.radial=radial
         self.learnertype=learner
@@ -157,6 +161,15 @@ class player:
         self.statusmessage="No data received yet"
         self.teachingstrat=teachingstrat
         self.teachingweight=teachingweight
+
+    def __str__(self):
+        if self.teachingstrat is not None:
+            return "("+str(self.learner)+" : ("+str(self.teachingweight)+") "+str(self.teachingstrat)+")"
+        else:
+            return self.learnertype+" "+str(self.learner)
+
+    def __repr__(self):
+        return str(self)
 
     def respond(self,move):
         """
@@ -217,3 +230,15 @@ class player:
 
     def getDescription(self):
         return "playerdescription"
+
+    def perturb(self,mag):
+        if random.random()>.5:
+            newteachingweight=self.teachingweight*(1+mag)
+        else:
+            newteachingweight=self.teachingweight/(1+mag)
+        if random.random()>.5:
+            newc=self.kwargs["c"]*(1+mag)
+        else:
+            newc=self.kwargs["c"]/(1+mag)
+        return player(learner=self.learnertype,radial=self.radial,envy=self.envy,fairness=self.fairness,
+                      teachingstrat=self.teachingstrat.perturb(mag),teachingweight=newteachingweight,c=newc)

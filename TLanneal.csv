@@ -1,0 +1,3 @@
+Iteration,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,runlength,discountfactor,agent_c,agent_threshhold,agent_zero,agent_negone,agent_tweight
+-1.5,5.5,5.5,5.5,5.5,5.5,1000,0.99,5.5,5.5,5.5,5.5,5.5
+

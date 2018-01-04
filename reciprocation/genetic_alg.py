@@ -6,6 +6,7 @@ import bisect
 import math
 import random
 import numpy as np
+import pandas
 
 import scipy.stats
 
@@ -203,10 +204,10 @@ def anneal(learner,time,strat,iterations=1000,discountfactor=.99,perturb_sched=N
         print str(t)+"========================================"
         print threshhold
         print strat
-        performrecord.append(evaluate(strat,learner,iterations,discountfactor,10))
-        print evaluate(strat,learner,iterations,discountfactor,10)
+        #performrecord.append(evaluate(strat,learner,iterations,discountfactor,10))
+        #print evaluate(strat,learner,iterations,discountfactor,10)
         print newstrat
-        print evaluate(newstrat,learner,iterations,discountfactor,10)
+        #print evaluate(newstrat,learner,iterations,discountfactor,10)
         if compare(newstrat,strat,learner,iterations,discountfactor,threshhold):
             strat=newstrat
     return (strat,performrecord)
@@ -215,18 +216,35 @@ def anneal(learner,time,strat,iterations=1000,discountfactor=.99,perturb_sched=N
 import numpy
 
 if __name__=="__main__":
+    result=pandas.read_csv("TLanneal.csv",index_col=(0,1,2,3,4,5,6,7))
+    opp_c=1
+    opp_threshhold=.7
+    opp_zero=0
+    opp_negone=-1
+    opp_tweight=.5
+    run_length=1000
+    discountfactor=.99
+    for i in range(10):
+        if not (i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor) in result.index:
+            strat=anneal(player("UCT",c=opp_c,teachingstrat=simpleteacher(opp_threshhold,opp_zero,opp_negone),teachingweight=opp_tweight),
+                         500,player("UCT",c=1,teachingstrat=simpleteacher(),teachingweight=1),
+                         run_length,discountfactor,perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)])[0]
+            result.loc[(i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor),
+                       ("agent_c","agent_threshhold","agent_zero","agent_negone","agent_tweight")]=(strat.kwargs["c"],strat.teachingstrat.threshhold,strat.teachingstrat.zeroresponse,strat.teachingstrat.negoneresponse,strat.teachingweight)
+    result.to_csv("TLanneal.csv")
+    """
     results=[]
     strats=[]
     dist={}
     maxdist=0
 
-    for i in range(10):
-        results.append(anneal(player("UCT",False,c=1),500,simpleteacher(),1000,.99,
+    for i in range(1):
+        results.append(anneal(player("UCT",False,c=1),500,player("UCT",c=1,teachingstrat=simpleteacher(),teachingweight=100),1000,.99,
                               perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)]))
         strats.append(results[-1][0])
     print results
 
-    """
+    
 Simple Teacher: (0.877978879300523, -0.8642673549007216, -0.9520677711799796)
 Simple Teacher: (0.8819598422232935, -0.8558368240439798, -0.9626376472554382)
 Simple Teacher: (0.8786368092426146, -0.8623209184868226, -0.9494024237956031)
@@ -250,11 +268,20 @@ Simple Teacher: (0.8826317296617158, -0.8616230586995601, -0.9605763169106329)
 Simple Teacher: (-1, -1, -1)
 Simple Teacher: (-1, -1, -0.33219942288071364)
 
+fixed problem with simple strat and embedded inside UCT
+ Simple Teacher: (0.8625323033465107, -0.8442615002852236, -0.7625819295609246)), 
+ Simple Teacher: (0.8805288954871072, -0.9362654603990936, -0.8856222483907693)), 
+ Simple Teacher: (0.8644565202324356, -0.8766429345580702, 0.002950736349937203)), 
+ Simple Teacher: (0.8617864253394585, -0.8093424008223882, -0.9265540082559884)), 
+ Simple Teacher: (0.8641218799740076, -0.7612442247307779, -0.8819479830750628)), 
+ Simple Teacher: (0.8655738912981962, -0.757429886410804, 0.03944226665083986)),
+ Simple Teacher: (0.8641270585995933, -0.8354764827486298, 9.621941724023383e-05)), 
+ Simple Teacher: (0.8551752451559217, -0.7714274554066224, -0.9812379528679981)), 
+ Simple Teacher: (0.8803845627777167, -0.8355198600398206, -0.9837988136693827)), 
+ Simple Teacher: (0.8618197825979863, -0.7982721090254992, -0.913606656669715))]
 
     """
 
-    print results
-    print strats
 
 if __name__=="mkdata":
     result={}

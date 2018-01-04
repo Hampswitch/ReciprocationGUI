@@ -2,7 +2,23 @@ import reciprocation.learningstrategies as learners
 import reciprocation.teachingstrategies as strats
 import reciprocation.genetic_alg as ga
 import math
+import numpy
 import shapely.geometry as sg
+
+def betadist(meanval,var):
+    """
+    This function will produce a beta distribution over values from -1 to 1 with the given mean and variance
+    :param mean:
+    :param var:
+    :return:
+    """
+    m=(1-meanval)/meanval
+    alpha=(m-var*(1+2*m+m**2))/(var*(1+3*m+3*m**2+m**3))
+    beta=alpha*m
+    if alpha>0 and beta>0:
+        return numpy.random.beta(alpha,beta)
+    else:
+        raise ValueError("Maximum achievable variance for mean "+str(meanval)+" is "+str(meanval*(1-meanval)))
 
 def combine_SD(m1,s1,n1,m2,s2,n2):
     m=(m1*n1+m2*n2)/(n1+n2)
@@ -17,6 +33,10 @@ competitornamelist=["teaching-greedy","teaching-generous","teaching-fair","achie
 greedystrat=[(-1,-1),(0,-1),(99.0/101,20.0/101),(1,20.0/101)]
 generousstrat=[(-1,0),(0,0),(20.0/101,99.0/101),(1,99.0/101)]
 fairstrat=[(-1,-1),(math.sqrt(2)/2,math.sqrt(2)/2),(1,math.sqrt(2)/2)]
+
+simplegreedystrat=strats.simpleteacher(99.0/101,-1,-.5)
+simplefairstrat=strats.simpleteacher(math.sqrt(2)/2,0,-1)
+simplegenerousstrat=strats.simpleteacher(20.0/101,0,0)
 
 greedyset=learners.getacceptableset(greedystrat)
 generousset=learners.getacceptableset(generousstrat)
@@ -34,7 +54,7 @@ competitorlist2=[strats.reciprocal(greedystrat),strats.reciprocal(generousstrat)
                  learners.player("UCT",c=1),learners.player("UCT",c=1,acceptableset=greedyset),learners.player("UCT",c=1,acceptableset=generousset),learners.player("UCT",c=1,acceptableset=fairset),learners.player("UCT",c=1,envy=.5,fairness=0)]
 """
 
-
+"""
 competitornamelist=["UCT","Greedy","Fair","Generous","UCT-Greedy-Low","UCT-Greedy-Med","UCT-Greedy-High","UCT-Fair-Low","UCT-Fair-Med","UCT-Fair-High",
                     "UCT-Generous-Low","UCT-Generous-Med","UCT-Generous-High"]
 
@@ -59,6 +79,32 @@ competitorlist2=[learners.player("UCT",c=1),strats.reciprocal(greedystrat),strat
                  learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=.125),
                  learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=.5),
                  learners.player("UCT", c=1, teachingstrat=strats.reciprocal(generousstrat), teachingweight=2)]
+"""
+
+competitornamelist=["UCT","Greedy","Fair","Generous","UCT-Greedy-Low","UCT-Greedy-Med","UCT-Greedy-High","UCT-Fair-Low","UCT-Fair-Med","UCT-Fair-High",
+                    "UCT-Generous-Low","UCT-Generous-Med","UCT-Generous-High"]
+
+competitorlist1=[learners.player("UCT",c=1),simplegreedystrat,simplefairstrat,simplegenerousstrat,
+                 learners.player("UCT", c=1, teachingstrat=simplegreedystrat, teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=simplegreedystrat, teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=simplegreedystrat, teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=simplefairstrat, teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=simplefairstrat, teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=simplefairstrat, teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=2)]
+
+competitorlist2=[learners.player("UCT",c=1),simplegreedystrat,simplefairstrat,simplegenerousstrat,
+                 learners.player("UCT", c=1, teachingstrat=simplegreedystrat, teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=simplegreedystrat, teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=simplegreedystrat, teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=simplefairstrat, teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=simplefairstrat, teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=simplefairstrat, teachingweight=2),
+                 learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=.125),
+                 learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=.5),
+                 learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=2)]
 
 if __name__=="__main__":
     resultdict={}
@@ -70,12 +116,12 @@ if __name__=="__main__":
                 c1.reset()
             if "reset" in dir(c2):
                 c2.reset()
-            resultdict[(n1,n2)]=ga.evaluate(c1,c2,10000,repetitions=10)
+            resultdict[(n1,n2)]=ga.evaluate(c1,c2,1000,discountfactor=.99,repetitions=10)
 
     print resultdict
 
-    meanfile=open("meandataTW.csv","w")
-    stdfile=open("stddataTW.csv","w")
+    meanfile=open("meandataanneal.csv","w")
+    stdfile=open("stddataanneal.csv","w")
     meanfile.write(","+",".join(competitornamelist)+"\n")
     stdfile.write(","+",".join(competitornamelist)+"\n")
     for n1 in competitornamelist:
@@ -89,6 +135,20 @@ if __name__=="__main__":
 
     meanfile.close()
     stdfile.close()
+
+if __name__=="noisedata":
+    resultfile=open("noisedata.csv","w")
+    resultfile.write(",greedy,fair,generous,\n")
+    uct=learners.player("UCT",c=1)
+    for noise in [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1]:
+        outline=str(noise)+","
+        for strat in [simplegreedystrat,simplefairstrat,simplegenerousstrat]:
+            strat.noise=noise
+            e=ga.evaluate(uct,strat,10000,1,100)
+            outline=outline+str(e[2])+","
+        resultfile.write(outline+"\n")
+    resultfile.close()
+
 """
 tlist=[math.sin(math.pi*r/40.0) for r in range(1,20)]
 stratlist=[[(0,-1),(t,math.sqrt(1-t**2))] for t in tlist]+[[(0,0),(t,math.sqrt(1-t**2))] for t in tlist if math.sqrt(1-t**2)>.5]
