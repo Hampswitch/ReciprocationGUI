@@ -224,14 +224,17 @@ if __name__=="__main__":
     opp_tweight=.5
     run_length=1000
     discountfactor=.99
-    for i in range(10):
-        if not (i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor) in result.index:
-            strat=anneal(player("UCT",c=opp_c,teachingstrat=simpleteacher(opp_threshhold,opp_zero,opp_negone),teachingweight=opp_tweight),
-                         500,player("UCT",c=1,teachingstrat=simpleteacher(),teachingweight=1),
-                         run_length,discountfactor,perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)])[0]
-            result.loc[(i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor),
-                       ("agent_c","agent_threshhold","agent_zero","agent_negone","agent_tweight")]=(strat.kwargs["c"],strat.teachingstrat.threshhold,strat.teachingstrat.zeroresponse,strat.teachingstrat.negoneresponse,strat.teachingweight)
-    result.to_csv("TLanneal.csv")
+    for opp_c in [.25,1,4]:
+        for (opp_threshhold,opp_zero,opp_negone) in [(.7,0,-1),(.95,-1,-1),(.5,0,0)]:
+            for opp_tweight in [0,.125,.5,2,8]:
+                for i in range(3):
+                    if not (i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor) in result.index:
+                        strat=anneal(player("UCT",c=opp_c,teachingstrat=simpleteacher(opp_threshhold,opp_zero,opp_negone),teachingweight=opp_tweight),
+                                     500,player("UCT",c=1,teachingstrat=simpleteacher(),teachingweight=1),
+                                     run_length,discountfactor,perturb_sched=[.5*.994**t for t in range(500)],threshhold_sched=[.5*.994**t for t in range(500)])[0]
+                        result.loc[(i,opp_c,opp_threshhold,opp_zero,opp_negone,opp_tweight,run_length,discountfactor),
+                                   ("agent_c","agent_threshhold","agent_zero","agent_negone","agent_tweight")]=(strat.kwargs["c"],strat.teachingstrat.threshhold,strat.teachingstrat.zeroresponse,strat.teachingstrat.negoneresponse,strat.teachingweight)
+                    result.to_csv("TLanneal.csv")
     """
     results=[]
     strats=[]
