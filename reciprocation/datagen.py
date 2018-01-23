@@ -3,7 +3,7 @@ import reciprocation.teachingstrategies as strats
 import reciprocation.genetic_alg as ga
 import math
 import numpy
-import shapely.geometry as sg
+import pandas
 
 def betadist(meanval,var):
     """
@@ -107,6 +107,13 @@ competitorlist2=[learners.player("UCT",c=1),simplegreedystrat,simplefairstrat,si
                  learners.player("UCT", c=1, teachingstrat=simplegenerousstrat, teachingweight=2)]
 
 if __name__=="__main__":
+    data=pandas.read_csv("TLanneal.csv",index_col=[0,1,2,3,4,5,6,7])
+    for row in data.iterrows():
+        agent=learners.player("UCT",c=row[1]["agent_c"],teachingstrat=strats.simpleteacher(row[1]["agent_threshhold"],row[1]["agent_zero"],row[1]["agent_negone"]),teachingweight=row[1]["agent_tweight"])
+        opponent=learners.player("UCT",c=row[0][1],teachingstrat=strats.simpleteacher(row[0][2],row[0][3],row[0][4]),teachingweight=row[0][5])
+        print "\t".join(str(v) for v in ga.evaluate(agent,opponent,1000,.99,100))
+
+if __name__=="calcmeanoutcomes":
     resultdict={}
 
     for (c1,n1) in zip(competitorlist1,competitornamelist):

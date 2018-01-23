@@ -12,6 +12,7 @@ import scipy.stats
 
 from learningstrategies import player
 from teachingstrategies import reciprocal,simpleteacher
+import learningstrategies as ls
 
 class staticstrat:
     def __init__(self,response=0.0):
@@ -126,7 +127,7 @@ def evaluate(strat1, strat2, iterations, discountfactor=1.0, repetitions=1):
 
 #TODO: save performance records of a given strat - this function returns the generated lists as well as the result, and
 # can accept initial lists
-def compare(strat1,strat2,learner,iterations=1000,discountfactor=1.0,threshhold=.1):
+def compare(strat1,strat2,learner,iterations=1000,discountfactor=1.0,threshhold=.1,default=True):
     strat1list=[evaluate(strat1,learner,iterations,discountfactor,1)[0] for i in range(10)]
     strat2list=[evaluate(strat2,learner,iterations,discountfactor,1)[0] for i in range(10)]
     while scipy.stats.ttest_ind(strat1list,strat2list,equal_var=False).pvalue>threshhold and len(strat1list)<1000:
@@ -139,8 +140,9 @@ def compare(strat1,strat2,learner,iterations=1000,discountfactor=1.0,threshhold=
         newstrat2=[evaluate(strat2,learner,iterations,discountfactor,1)[0] for i in range(10)]
         strat1list=strat1list+newstrat1
         strat2list=strat2list+newstrat2
-    return np.mean(strat1list)>np.mean(strat2list)
-
+    if len(strat1list)<1000 or default:
+        return np.mean(strat1list)>np.mean(strat2list)
+    return None
 
 def weightedselect(weights,objects):
     total=sum(weights)
@@ -187,8 +189,6 @@ class genepool:
             result.append((i,sum([r.respond(i)/len(self.genepool) for r in self.genepool])))
         return result
 
-def comparestrats(strat1,strat2,learner):
-    sample1=[evaluate()]
 
 def anneal(learner,time,strat,iterations=1000,discountfactor=.99,perturb_sched=None,threshhold_sched=None):
     #strat=reciprocal(sorted([(-1,2*random.random()-1)]+[(2*random.random()-1,2*random.random()-1) for i in range(stratlen-2)]+[(1,2*random.random()-1)]),bias=None)
@@ -212,10 +212,92 @@ def anneal(learner,time,strat,iterations=1000,discountfactor=.99,perturb_sched=N
             strat=newstrat
     return (strat,performrecord)
 
+class stratset:
+    def __init__(self,size,learner,iterations,discountfactor,threshhold=.05):
+        self.size=size
+        self.learner=learner
+        self.iterations=iterations
+        self.discountfactor=discountfactor
+        self.stratlist=[]
+        self.threshhold=threshhold
+
+    def __str__(self):
+        return str([str(s) for s in self.stratlist])
+
+    def __repr__(self):
+        return str(self)
+
+    def addstrat(self,strat):
+        if len(self.stratlist)==0:
+            self.stratlist.append(strat)
+            return True
+        elif len(self.stratlist)<self.size:
+            self.stratlist.append(strat)
+            self.bubble()
+            return True
+        else:
+            if compare(strat,self.stratlist[-1],self.learner,self.iterations,self.discountfactor,self.threshhold,default=False):
+                self.stratlist[-1]=strat
+                self.bubble()
+                return True
+            else:
+                return False
+
+    def bubble(self):
+        """
+        This function bubbles up
+        :return:
+        """
+        i=len(self.stratlist)-1
+        while i>0:
+            if compare(self.stratlist[i],self.stratlist[i-1],self.learner,self.iterations,self.discountfactor,self.threshhold,default=False):
+                self.stratlist[i],self.stratlist[i-1]=self.stratlist[i-1],self.stratlist[i]
+                i=i-1
+            else:
+                i=0  # Kind of a hack - basically, if you don't switch, end the loop
+
+def slowanneal(learner,stratmaker,setsize=10,iterations=1000,discountfactor=.99,perturbmin=.001):
+    strats=stratset(setsize,learner,iterations,discountfactor)
+    for i in range(setsize):
+        strats.addstrat(stratmaker())
+    perturb=.5
+    updated=True
+    while perturb>perturbmin:
+        print "Perturb: "+str(perturb)
+        while updated:
+            print "Update"
+            print strats
+            updated=False
+            for strat in [s.perturb(perturb) for s in strats.stratlist]:
+                updated=strats.addstrat(strat) or updated
+        perturb=perturb*.5
+    return strats
+    # Create initial set of strategies
+    # Set initial perturb factor
+    # Loop until you make a pass with no improvement
+    #   Find best set w/ this perturb factor
+    #       Create a perturbed set
+    #       try to climb the perturbed set into the current set
+    #       Repeat until none of the perturbed make it into the current set
+    #   Decrease perturb factor
 
 import numpy
 
 if __name__=="__main__":
+    result=pandas.read_csv("multianneal.csv",index_col=(0,1,2,3))
+    for learnername,learner in zip(["default","highc","lowc","radial","smallprior","medprior","largeprior"],
+                                   [player("UCT",c=.25,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=1,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=.0625,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),
+                                    player("UCT",c=.25,radial=True,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=.25,data=ls.UCTprior1,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),
+                                    player("UCT",c=.25,data=ls.UCTprior2,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=.25,data=ls.UCTprior3,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2)]):
+        for discountfactor in [.99,.999,1.0]:
+            for length in [1000,10000]:
+                print (learnername,discountfactor,length)
+                strats=slowanneal(learner,lambda : player("UCT",c=1,teachingstrat=simpleteacher(),teachingweight=1),iterations=length,discountfactor=discountfactor)
+                for i in range(len(strats.stratlist)):
+                    result.loc[(learnername,discountfactor,length,i),("agent_c","agent_threshhold","agent_zero","agent_negone","agent_tweight")]=(strats.stratlist[i].kwargs["c"],strats.stratlist[i].teachingstrat.threshhold,strats.stratlist[i].teachingstrat.zeroresponse,strats.stratlist[i].teachingstrat.negoneresponse,strats.stratlist[i].teachingweight)
+                result.to_csv("multianneal.csv")
+
+if __name__=="TLanneal":
     result=pandas.read_csv("TLanneal.csv",index_col=(0,1,2,3,4,5,6,7))
     opp_c=1
     opp_threshhold=.7
@@ -283,6 +365,8 @@ fixed problem with simple strat and embedded inside UCT
  Simple Teacher: (0.8803845627777167, -0.8355198600398206, -0.9837988136693827)), 
  Simple Teacher: (0.8618197825979863, -0.7982721090254992, -0.913606656669715))]
 
+
+simple teacher vs UCT c=1 .885, -.9, -.925
     """
 
 

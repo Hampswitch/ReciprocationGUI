@@ -62,14 +62,33 @@ class BucketUCB:
     def pickmove(self):
         pass
 
+UCTprior1=[2,1.525,[1,.285,None,None],[1,1.24,None,None]]
+UCTprior2=[4,3.04,[2,.571,[1,-.135,None,None],[1,.706,None,None]],[2,2.47,[1,1.2,None,None],[1,1.27,None,None]]]
+UCTprior3=[8,6.08,[4,1.14,[2,-.271,[1,-.421,None,None],[1,.15,None,None]],[2,1.412,[1,.548,None,None],[1,.864,None,None]]],[4,4.94,[2,2.4,[1,1.11,None,None],[1,1.29,None,None]],[2,2.54,[1,1.39,None,None],[1,1.15,None,None]]]]
 
 class UCTlearner:
-    def __init__(self,c=1.0):
-        self.data=[0,0,None,None]
+    def __init__(self,c=1.0,data=None):
+        if data is not None:
+            self.data=data
+        else:
+            self.data=[0,0,None,None]
         self.C=c
 
     def __str__(self):
-        return "UCT ("+str(self.C)+")"
+        return "UCT (c="+str(self.C)+") "+str(self.getTree(levels=3))
+
+    def getTree(self,tree=None,levels=0):
+        if tree is None:
+            tree=self.data
+        if levels==0:
+            return (tree[0],tree[1])
+        child1=None
+        if tree[2] is not None:
+            child1=self.getTree(tree[2],levels-1)
+        child2=None
+        if tree[3] is not None:
+            child2=self.getTree(tree[3],levels-1)
+        return [(tree[0],tree[1]),child1,child2]
 
     def observe(self,move,payoff):
         curnode = self.data
@@ -229,7 +248,9 @@ class player:
         return self.statusmessage
 
     def getDescription(self):
-        return "playerdescription"
+        result=self.learnertype+"\n"
+        result=result+str(self.learner)
+        return result
 
     def perturb(self,mag):
         if random.random()>.5:
