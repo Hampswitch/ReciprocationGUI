@@ -167,15 +167,71 @@ class ReciprocalStrategySelector(tk.Frame):
         strat=teachingstrategies.reciprocal(self.stratlist, self.bias).respond(move)
         return strat
 
+def plotpoint(x,y,canvas,size,xmin=-1.0,xmax=1.0,ymin=-1.0,ymax=1.0,dotsize=1,**kwargs):
+    x=min(x,xmax)
+    x=max(x,xmin)
+    y=min(y,ymax)
+    y=max(y,ymin)
+    xcoord=5+size*(x-xmin)/(xmax-xmin)
+    ycoord=5+size*(ymax-y)/(ymax-ymin)
+    canvas.create_oval(xcoord - dotsize, ycoord - dotsize, xcoord + dotsize,
+                                   ycoord + dotsize, **kwargs)
 
+class Histogram(tk.Frame):
+    def __init__(self,parent,minval,maxval,bucketcount):
+        tk.Frame.__init__(self,parent)
+        self.valuedict={}
+        self.bucketcount=bucketcount
+        self.display=tk.Canvas(self,width=210,height=210,borderwidth=1,relief=tk.RAISED,background="white")
+        self.display.pack(side=tk.TOP)
+        self.keyfunc=lambda x: int(math.floor(bucketcount*(min(maxval,max(minval,x))-minval)/float(maxval-minval)))
+
+    def addvalue(self,value):
+        k=self.keyfunc(value)
+        self.valuedict[k]=self.valuedict.get(k,0)+1
+        maxcount=max(self.valuedict.values())
+        self.display.delete(tk.ALL)
+        for i in range(self.bucketcount):
+            xfrom=5+i*200.0/self.bucketcount
+            xto=5+(i+1)*200.0/self.bucketcount
+            yfrom=205
+            yto=205-200.0*self.valuedict.get(i,0)/maxcount
+            self.display.create_rectangle(xfrom,yfrom,xto,yto)
+
+class StratEstimatorControl(tk.Frame):
+    def __init__(self,parent):
+        tk.Frame.__init__(self,parent)
+        tk.Label(self,text="Teacher Model").pack(side=tk.TOP)
+        self.teacherdisplay=tk.Canvas(self,width=210,height=210,borderwidth=1,relief=tk.RAISED,background="white")
+        self.teacherdisplay.pack(side=tk.TOP)
+        tk.Label(self,text="Learner Model").pack(side=tk.TOP)
+        self.learnerdisplay=Histogram(self,-2,2,100)
+        self.learnerdisplay.pack(side=tk.TOP)
+        self.lastplayermove=None
+        self.lastopponentmove=None
+
+    def addplayermove(self,value):
+        self.lastplayermove=value
+        if self.lastopponentmove is not None:
+            plotpoint(self.lastopponentmove,self.lastplayermove,self.teacherdisplay,200)
+
+    def addopponentmove(self,value):
+        self.lastopponentmove=value
+        if self.lastplayermove is not None:
+            payoff=self.lastopponentmove+math.sqrt(1-self.lastplayermove**2)
+            self.learnerdisplay.addvalue(payoff)
 
 class GameDisplay(tk.Frame):
     def __init__(self, parent,discount=None):
         self.discountfactor=1.0 if discount is None else 1.0-discount
         self.curdiscount=1.0
         tk.Frame.__init__(self, parent)
-        self.displaycanvas = tk.Canvas(self, width=410, height=410, borderwidth=1, relief=tk.RAISED, background="white")
-        self.displaycanvas.pack(side=tk.TOP)
+        displayframe=tk.Frame(self)
+        displayframe.pack(side=tk.TOP)
+        self.leftestimator=StratEstimatorControl(displayframe)
+        self.leftestimator.pack(side=tk.LEFT)
+        self.displaycanvas = tk.Canvas(displayframe, width=410, height=410, borderwidth=1, relief=tk.RAISED, background="white")
+        self.displaycanvas.pack(side=tk.LEFT)
         self.displaycanvas.create_line(0, 205, 410, 205)
         self.displaycanvas.create_line(205, 0, 205, 410)
         self.displaycanvas.create_line(0, 105, 410, 105, fill="darkgrey")
@@ -185,6 +241,8 @@ class GameDisplay(tk.Frame):
         self.displaycanvas.create_oval(5, 5, 405, 405)
         self.displaycanvas.create_oval(105, 105, 305, 305)
         self.displaycanvas.create_polygon(5,380,30,355,30,405,tags="player",fill="black")
+        self.rightestimator=StratEstimatorControl(displayframe)
+        self.rightestimator.pack(side=tk.LEFT)
         self.x=[0,0]
         self.dx=[0,0]
         self.y=[0,0]
@@ -212,6 +270,8 @@ class GameDisplay(tk.Frame):
         self.debug.see(tk.END)
         if player!=self.curplayer:
             raise ValueError("Wrong player sent move")
+        [self.leftestimator,self.rightestimator][player].addplayermove([y,x][player])
+        [self.leftestimator, self.rightestimator][1-player].addopponentmove([y, x][player])
         self.x[player]=self.x[player]+x
         self.y[player]=self.y[player]+y
         self.n[player]=self.n[player]+1
@@ -260,4 +320,6 @@ class textlearner(tk.Frame):
             self.log.insert(tk.END, "Played initial move %.3f\n" % response)
         self.log.insert(tk.END, "Status: \n" + self.strat.getStatus()+"\n")
         self.log.see(tk.END)
+        self.description.delete(1.0,tk.END)
+        self.description.insert(tk.END,self.strat.getDescription())
         return response

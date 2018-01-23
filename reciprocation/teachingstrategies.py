@@ -178,7 +178,10 @@ class simpleteacher:
         return simpleteacher(newthreshhold,newzeroresponse,newnegoneresponse)
 
     def getDescription(self):
-        return "Simple Teacher\n  Threshhold: %.3f\n  Zero Response: %.3f\n"
+        return "Simple Teacher\n  Threshhold: %.3f\n  Zero Response: %.3f\n  NegOne Response: %.3f\n"%(self.threshhold,self.zeroresponse,self.negoneresponse)
+
+    def getStatus(self):
+        return ""
 
     def reset(self):
         pass
