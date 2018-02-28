@@ -1,6 +1,5 @@
 import math
 import random
-import shapely.geometry as sg
 import bisect
 import teachingstrategies
 import copy
