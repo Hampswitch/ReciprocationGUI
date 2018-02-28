@@ -1,6 +1,5 @@
 import bisect
 import math
-import shapely.geometry as sg
 import random
 import utils
 
@@ -45,87 +44,8 @@ def biasedinterpolate(s1,s2,p,b):
     result=interpolate((s1[0],s1[1]+shift),s2,p)
     return result
 
-def get_closest_point(polygon,point):
-    pol_ext=sg.LinearRing(polygon.exterior.coords)
-    d=pol_ext.project(point)
-    p=pol_ext.interpolate(d)
-    return list(p.coords)[0]
 
 
-class achievableteacher:
-    def __init__(self,achievableset=None,strat=None,average=False,startmove=0):
-        if achievableset is not None:
-            self.achievableset=achievableset
-        else:
-            self.achievableset=sg.Polygon(reciprocal(strat).getachievableset(100))
-        if average:
-            self.n=0.0
-            self.mypayoff=0.0
-            self.opppayoff=0.0
-            self.average=True
-        else:
-            self.average=False
-        self.startmove=startmove
-
-    def reset(self):
-        self.n=0.0
-        self.mypayoff=0.0
-        self.opppayoff=0.0
-
-    def __str__(self):
-        return "Achieveable Teacher "+str(self.achievableset)
-
-    def __repr__(self):
-        return str(self)
-
-    def respond(self,oppchoice):
-        if oppchoice is None:
-            return self.startmove
-        if self.average:
-            self.n=self.n+1
-            self.mypayoff=self.mypayoff+oppchoice
-            self.opppayoff=self.opppayoff+math.sqrt(1-oppchoice**2)
-
-            oPT=sg.Point(self.mypayoff/self.n,self.opppayoff/self.n)
-            availablePoints=oPT.buffer(1/self.n)
-            acceptablepoints=availablePoints.intersection(self.achievableset)
-            if acceptablepoints.is_empty:
-                p=get_closest_point(self.achievableset,oPT)
-                response=min(1,max(-1,(p[1]-self.opppayoff/self.n)*self.n))
-                self.mypayoff = self.mypayoff + math.sqrt(1 - response ** 2)
-                self.opppayoff = self.opppayoff + response
-                return response
-            mypayoff_total=acceptablepoints.bounds[3]
-            if acceptablepoints.distance(sg.Point(mypayoff_total,self.opppayoff/self.n+math.sqrt(max(0,1-(mypayoff_total*self.n-self.mypayoff)**2))/self.n))==0:
-                response=math.sqrt(max(0,1-(mypayoff_total*self.n-self.mypayoff)**2))
-            else:
-                response=-math.sqrt(max(0,1-(mypayoff_total*self.n-self.mypayoff)**2))
-            self.mypayoff=self.mypayoff+math.sqrt(1-response**2)
-            self.opppayoff=self.opppayoff+response
-            return response
-        else:
-            oPT = sg.Point(oppchoice, math.sqrt(1 - oppchoice ** 2))
-            availablePoints = oPT.buffer(1)
-            acceptablepoints = availablePoints.intersection(self.achievableset)
-            if acceptablepoints.is_empty:
-                p=get_closest_point(self.achievableset,oPT)
-                response=p[1]-math.sqrt(1-oppchoice**2)
-                return response
-            mypayoff_total=acceptablepoints.bounds[3]
-            if acceptablepoints.distance(sg.Point(mypayoff_total,math.sqrt(1-oppchoice**2)+math.sqrt(max(0,1-(mypayoff_total-oppchoice)**2))))<.01:
-                response=math.sqrt(max(0,1-(mypayoff_total-oppchoice)**2))
-            else:
-                response=-math.sqrt(max(0,1-(mypayoff_total-oppchoice)**2))
-            return response
-
-    def getachievableset(self):
-        return self.achievableset
-
-    def getDescription(self):
-        return "Achievable Set"
-
-    def getStatus(self):
-        return "Achievable Set Status"
 
 class simpleteacher:
     def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None,override=[]):
@@ -266,12 +186,3 @@ class reciprocal:
             result.append((opp_c_me+me_c_me,opp_c_opp+me_c_opp))
         return result
 
-    def compare(self,other,pointcount=360):
-        s1=sg.Polygon(self.getachievableset(pointcount))
-        s2=sg.Polygon(other.getachievableset(pointcount))
-        result=0
-        for p in s1.boundary.coords:
-            result=max(result,sg.Point(p).distance(s2))
-        for p in s2.boundary.coords:
-            result=max(result,sg.Point(p).distance(s1))
-        return result
