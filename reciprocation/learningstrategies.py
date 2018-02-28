@@ -4,6 +4,7 @@ import shapely.geometry as sg
 import shapely.affinity as sa
 import bisect
 import teachingstrategies
+import copy
 
 class fastlearner:
     def __init__(self):
@@ -16,7 +17,7 @@ class fastlearner:
     def pickmove(self):
         if None not in self.payoffs:
             self.zoom()
-        return self.moves[self.payoffs.index[None]]
+        return self.moves[self.payoffs.index(None)]
 
     def zoom(self):
         pmax=max(self.payoffs)
@@ -41,6 +42,10 @@ class fastlearner:
         self.moves=[newmin,(3*newmin+newmax)/4.0,(newmin+newmax)/2.0,(newmin+3*newmax)/4.0,newmax]
         self.payoffs=newpayoffs
 
+    def reset(self):
+        self.moves = [0, .25, .5, .75, 1]
+        self.payoffs = [None, None, None, None, None]
+
 class staticPlayer:
     def __init__(self,response):
         self.response=response
@@ -50,6 +55,9 @@ class staticPlayer:
 
     def pickmove(self):
         return self.response
+
+    def reset(self):
+        pass
 
 
 class BucketUCB:
@@ -66,13 +74,32 @@ UCTprior1=[2,1.525,[1,.285,None,None],[1,1.24,None,None]]
 UCTprior2=[4,3.04,[2,.571,[1,-.135,None,None],[1,.706,None,None]],[2,2.47,[1,1.2,None,None],[1,1.27,None,None]]]
 UCTprior3=[8,6.08,[4,1.14,[2,-.271,[1,-.421,None,None],[1,.15,None,None]],[2,1.412,[1,.548,None,None],[1,.864,None,None]]],[4,4.94,[2,2.4,[1,1.11,None,None],[1,1.29,None,None]],[2,2.54,[1,1.39,None,None],[1,1.15,None,None]]]]
 
+def getavgpayoff(start,stop):
+    """
+    This function returns the expected payoff the agent will receive if they randomly give the opponent an amount uniformly chosen between start and stop
+    """
+    startval=0.5*(math.sqrt(1-start*start)*start+math.asin(start))
+    stopval=0.5*(math.sqrt(1-stop*stop)*stop+math.asin(stop))
+    return (stopval-startval)/(stop-start)
+
 class UCTlearner:
-    def __init__(self,c=1.0,data=None):
-        if data is not None:
-            self.data=data
+    def __init__(self,c=1.0,initdata=None,maxdepth=None):
+        if initdata is not None:
+            self.data=initdata
         else:
             self.data=[0,0,None,None]
         self.C=c
+        self.initdata=initdata
+        self.maxdepth=maxdepth
+
+    def reset(self):
+        if self.initdata is not None:
+            self.data=self.initdata
+        else:
+            self.data=[0,0,None,None]
+
+    def clone(self):
+        return UCTlearner(self.C,self.initdata,self.maxdepth)
 
     def __str__(self):
         return "UCT (c="+str(self.C)+") "+str(self.getTree(levels=3))
@@ -114,20 +141,25 @@ class UCTlearner:
                 curmax = (curmin + curmax) / 2
         curnode[nextnode] = [1, payoff, None, None]
 
-    def pickmove(self,c=None,extradata=False,tmove=None,twt=None):
+    def pickmove(self,c=None,extradata=False,tmove=None,twt=None,payofffunc=None):
         if c is None:
             c=self.C
         curnode = self.data
         curmin = -1.0
         curmax = 1.0
+        if payofffunc is None:
+            if tmove is not None and twt is not None:
+                payofffunc=lambda x,y: twt if tmove>x and tmove<y else 0.0
+            else:
+                payofffunc=lambda x,y: 0.0
         while curnode[2] is not None and curnode[3] is not None:
-            if (curnode[2][1] / curnode[2][0] +
-                        c * math.sqrt(2 * math.log(curnode[0]) / curnode[2][0]) +
-                    (twt if (twt is not None) and (tmove>curmin) and (tmove < (curmin+curmax)/2) else 0.0)
-                    >
-                            curnode[3][1] / curnode[3][0] +
-                            c * math.sqrt(2 * math.log(curnode[0]) / curnode[3][0]) +
-                    (twt if (twt is not None) and (tmove<curmax) and (tmove >(curmin+curmax)/2) else 0.0)):
+            leftavg=curnode[2][1] / curnode[2][0]
+            rightavg=curnode[3][1] / curnode[3][0]
+            leftexplore=c*math.sqrt(2*math.log(curnode[0])/curnode[2][0])
+            rightexplore=c*math.sqrt(2*math.log(curnode[0])/curnode[3][0])
+            leftteaching=payofffunc(curmin,(curmax+curmin)/2)
+            rightteaching=payofffunc((curmax+curmin)/2,curmax)
+            if leftavg+leftexplore+leftteaching>rightavg+rightexplore+rightteaching:
                 curnode = curnode[2]
                 curmax = (curmin + curmax) / 2
             else:
@@ -163,29 +195,27 @@ def getacceptableset(strat):
     return baseset
 
 class player:
-    def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,acceptableset=None,
-                 distpenalty=100,
-                 teachingstrat=None,teachingweight=None,**kwargs):
+    def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,
+                 teachingstrat=None,teachingweight=None,startmove=None,override=[]):
         self.radial=radial
-        self.learnertype=learner
+        self.learner=learner
         self.envy=envy
         self.fairness=fairness
         self.responsefunc=responsefunc
         self.oppresponsefunc=oppresponsefunc
-        self.acceptableset=acceptableset
-        self.distpenalty=distpenalty
-        self.kwargs=kwargs
         self.reset()
         self.lastmove = None
         self.statusmessage="No data received yet"
         self.teachingstrat=teachingstrat
         self.teachingweight=teachingweight
+        self.override=override
+        self.startmove=startmove
 
     def __str__(self):
         if self.teachingstrat is not None:
             return "("+str(self.learner)+" : ("+str(self.teachingweight)+") "+str(self.teachingstrat)+")"
         else:
-            return self.learnertype+" "+str(self.learner)
+            return str(self.learner)
 
     def __repr__(self):
         return str(self)
@@ -199,7 +229,10 @@ class player:
         """
         self.statusmessage=""
         if move is None or self.lastmove is None:
-            self.lastmove=2*random.random()-1
+            if self.startmove is not None:
+                self.lastmove=self.startmove
+            else:
+                self.lastmove=2*random.random()-1
             self.statusmessage="Chose first move: "+str(self.lastmove)
         else:
             mypayoff=move+self.lastpayoff[0]
@@ -208,20 +241,12 @@ class player:
                 payoff=getpayoff(mypayoff,opppayoff,self.envy,self.fairness)
             elif self.responsefunc is not None and self.oppresponsefunc is not None:
                 raise NotImplementedError("use of responsefunc in player")
-            elif self.acceptableset is not None:
-                if callable(self.acceptableset):
-                    acceptset=self.acceptableset(self.t,mypayoff,opppayoff)
-                else:
-                    acceptset=self.acceptableset
-                dist=acceptset.distance(sg.Point(mypayoff,opppayoff))
-                if dist==0:
-                    payoff=mypayoff
-                else:
-                    payoff=mypayoff-self.distpenalty*dist
             else:
                 payoff=mypayoff
             self.learner.observe(self.lastmove,payoff)
-            if self.teachingstrat is not None:
+            if len(self.override)>0:
+                self.lastmove=self.override.pop(0)
+            elif self.teachingstrat is not None:
                 teachingresponse=self.teachingstrat.respond(move)
                 self.lastmove=self.learner.pickmove(tmove=teachingresponse,twt=self.teachingweight)
             else:
@@ -235,12 +260,10 @@ class player:
             return self.lastmove
 
     def reset(self):
-        if self.learnertype=="UCT":
-            self.learner=UCTlearner(self.kwargs['c'])
-        if self.learnertype=="static":
-            self.learner=staticPlayer(self.kwargs['response'])
-        if self.learnertype=="fast":
-            self.learner=fastlearner()
+        self.learner.reset()
+
+    def clone(self):
+        return player(self.learner.clone(),self.radial,self.envy,self.fairness,self.responsefunc,self.oppresponsefunc,self.teachingstrat,self.teachingweight,self.startmove,self.override)
 
     def getStatus(self):
         if "getStatus" in dir(self.learner):
@@ -248,8 +271,7 @@ class player:
         return self.statusmessage
 
     def getDescription(self):
-        result=self.learnertype+"\n"
-        result=result+str(self.learner)
+        result=str(self.learner)
         return result
 
     def perturb(self,mag):
@@ -262,4 +284,4 @@ class player:
         else:
             newc=self.kwargs["c"]/(1+mag)
         return player(learner=self.learnertype,radial=self.radial,envy=self.envy,fairness=self.fairness,
-                      teachingstrat=self.teachingstrat.perturb(mag),teachingweight=newteachingweight,c=newc)
+                      teachingstrat=self.teachingstrat.perturb(mag),teachingweight=newteachingweight,c=newc,initdata=self.learner.initdata)

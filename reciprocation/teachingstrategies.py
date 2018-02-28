@@ -128,7 +128,7 @@ class achievableteacher:
         return "Achievable Set Status"
 
 class simpleteacher:
-    def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None):
+    def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None,override=[]):
         if threshhold is None:
             self.threshhold=random.random()
             self.zeroresponse=random.uniform(-1,min(0,2*math.sqrt(1-self.threshhold**2)-1))
@@ -145,6 +145,8 @@ class simpleteacher:
             self.startmove=self.threshhold
         else:
             self.startmove=startmove
+        self.override=[x for x in override]
+        self.initoverride=[x for x in override]
         self.irrationalopponent=False
         self.noise=None
 
@@ -157,6 +159,8 @@ class simpleteacher:
     def respond(self,oppchoice):
         if oppchoice is None:
             result=self.startmove
+        elif len(self.override)>0:
+            result=self.override.pop(0)
         elif oppchoice>=self.threshhold:
             if self.irrationalopponent:
                 result=math.sqrt(1-oppchoice**2)
@@ -184,7 +188,10 @@ class simpleteacher:
         return ""
 
     def reset(self):
-        pass
+        self.override=[x for x in self.initoverride]
+
+    def clone(self):
+        return simpleteacher(self.threshhold,self.zeroresponse,self.negoneresponse,self.startmove,self.initoverride)
 
 def stratperturb(val,amt):
     return max(-1,min(1,val+random.normalvariate(0,amt)))

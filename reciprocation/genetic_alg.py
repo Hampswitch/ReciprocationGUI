@@ -102,6 +102,8 @@ def evaluate(strat1, strat2, iterations, discountfactor=1.0, repetitions=1):
     score1list=[]
     score2list=[]
     move=None
+    strat1=strat1.clone()
+    strat2=strat2.clone()
     strat1.reset()
     strat2.reset()
     for j in range(repetitions):
@@ -289,7 +291,7 @@ if __name__=="__main__":
                                    [player("UCT",c=.25,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=1,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=.0625,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),
                                     player("UCT",c=.25,radial=True,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=.25,data=ls.UCTprior1,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),
                                     player("UCT",c=.25,data=ls.UCTprior2,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2),player("UCT",c=.25,data=ls.UCTprior3,teachingstrat=simpleteacher(.7,0,-1),teachingweight=2)]):
-        for discountfactor in [.99,.999,1.0]:
+        for discountfactor in [1.0,.999,.99]:
             for length in [1000,10000]:
                 print (learnername,discountfactor,length)
                 strats=slowanneal(learner,lambda : player("UCT",c=1,teachingstrat=simpleteacher(),teachingweight=1),iterations=length,discountfactor=discountfactor)
