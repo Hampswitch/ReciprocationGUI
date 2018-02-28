@@ -2,8 +2,6 @@ import Tkinter as tk
 import math
 import teachingstrategies
 import ScrolledText
-from genetic_alg import evaluate,randomlinearstrat,learnerfactory
-import reciprocation.utils as utils
 
 """
 Controls for the game simulator found in gui

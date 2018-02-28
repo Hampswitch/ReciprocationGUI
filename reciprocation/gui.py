@@ -3,7 +3,6 @@ import controls
 import math
 import learningstrategies as ls
 import teachingstrategies as ts
-import datagen
 
 class gametracker(tk.Frame):
     def __init__(self,master,curplayer=0):

@@ -1,6 +1,6 @@
-import reciprocation.learningstrategies as learners
-import reciprocation.teachingstrategies as teachers
-import reciprocation.genetic_alg as ga
+import learningstrategies as learners
+import teachingstrategies as teachers
+import genetic_alg as ga
 
 import math
 import numpy as np
@@ -44,9 +44,6 @@ simplegreedystrat=teachers.simpleteacher(99.0 / 101, -1, -.5)
 simplefairstrat=teachers.simpleteacher(math.sqrt(2) / 2, 0, -1)
 simplegenerousstrat=teachers.simpleteacher(20.0 / 101, 0, 0)
 
-greedyset=learners.getacceptableset(greedystrat)
-generousset=learners.getacceptableset(generousstrat)
-fairset=learners.getacceptableset(fairstrat)
 
 """
 competitorlist1=[strats.reciprocal(greedystrat,startmove=.198),strats.reciprocal(generousstrat,startmove=.7),strats.reciprocal(fairstrat,startmove=.7),
@@ -129,7 +126,7 @@ if __name__=="__main__":
     ax.set_ylabel('teacher response')
 
     
-if __name__=="__main__firstmovemesh":
+if __name__=="__maain__":
     for threshhold in [x for x in rvals if x<1]:
         for zero in [-x for x in rvals if 1 - x < 2 * math.sqrt(1 - threshhold * threshhold)]:
             for negone in [-x for x in rvals]:
@@ -138,8 +135,9 @@ if __name__=="__main__firstmovemesh":
                         learner=learners.player(learner=learners.UCTlearner(c=1.0),startmove=startmove)
                         teacher=teachers.simpleteacher(threshhold,zero,negone,override=[initresponse])
                         result=ga.evaluate(learner,teacher,1000,.99,1000)
-                        print ", ".join([str(x) for x in [threshhold,zero,negone,startmove,initresponse,result[2]]])
-
+                        f=open("firstmovedata.csv","a")
+                        f.write(", ".join([str(x) for x in [threshhold,zero,negone,startmove,initresponse,result[2]]])+"\n")
+                        f.close()
 
 if __name__=="__maain__":
     outfile=open("TLeval.csv","a")

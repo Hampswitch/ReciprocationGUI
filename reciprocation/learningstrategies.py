@@ -1,7 +1,6 @@
 import math
 import random
 import shapely.geometry as sg
-import shapely.affinity as sa
 import bisect
 import teachingstrategies
 import copy
@@ -188,11 +187,7 @@ def getpayoff(p1,p2,envy,fairness):
     else:
         return p1-fairness*(p1-p2)
 
-def getacceptableset(strat):
-    baseset=sg.Polygon(teachingstrategies.reciprocal(strat).getachievableset(360))
-    baseset=baseset.union(sa.translate(baseset,xoff=2)).union(sa.translate(baseset,yoff=-2))
-    baseset=baseset.convex_hull
-    return baseset
+
 
 class player:
     def __init__(self,learner,radial=False,envy=None,fairness=None,responsefunc=None,oppresponsefunc=None,

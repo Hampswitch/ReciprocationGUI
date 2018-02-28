@@ -2,7 +2,7 @@ import Tkinter as tk
 import math
 import random
 
-from reciprocation.learningstrategies import UCTlearner
+from learningstrategies import UCTlearner
 
 
 class Static(tk.Frame):
