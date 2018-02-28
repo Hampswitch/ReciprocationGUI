@@ -2,7 +2,7 @@ import bisect
 import math
 import shapely.geometry as sg
 import random
-import reciprocation.utils as utils
+import utils
 
 
 def interpolate(s1,s2,p):
