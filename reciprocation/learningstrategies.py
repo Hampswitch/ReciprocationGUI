@@ -1,8 +1,5 @@
 import math
 import random
-import bisect
-import teachingstrategies
-import copy
 
 class fastlearner:
     def __init__(self):

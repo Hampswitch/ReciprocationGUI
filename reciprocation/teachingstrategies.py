@@ -1,7 +1,6 @@
 import bisect
 import math
 import random
-import utils
 
 
 def interpolate(s1,s2,p):
