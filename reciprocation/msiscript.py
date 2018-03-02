@@ -3,6 +3,7 @@ import learningstrategies as learners
 import genetic_alg as ga
 import teachingstrategies as teachers
 import multiprocessing
+import math
 
 rvals=[0.0,.156,.309,.454,.588,.707,.809,.891,.951,.988,1.0]
 opplist=[(.988,-.692,0.0),(.951,-.382,0.0),(.891,-.092,0.0),(.809,0.0,0.0),
@@ -10,7 +11,11 @@ opplist=[(.988,-.692,0.0),(.951,-.382,0.0),(.891,-.092,0.0),(.809,0.0,0.0),
          (.988,-1.0,-1.0),(.951,-1.0,-1.0),(.891,-1.0,-1.0),(.809,-1.0,-1.0),
          (.707,-1.0,-1.0),(.588,-1.0,-1.0),(.454,-1.0,-1.0),(.309,-1.0,-1.0),(.156,-1.0,-1.0),(0.0,-1.0,-1.0)]
 
-
+def opponentlist():
+    for t in rvals[:-1]:
+        for z in [-x for x in rvals if 1-x<2*math.sqrt(1-t*t)]:
+            for n in [-x for x in rvals]:
+                yield (t,z,n)
 
 def processopp(opp):
     threshhold=opp[0]
@@ -27,6 +32,6 @@ def processopp(opp):
 
 if __name__=="__main__":
     pool=multiprocessing.Pool(processes=10)
-    result=pool.map(processopp,opplist)
+    result=pool.map(processopp,opponentlist())
     for r in result:
         print r
