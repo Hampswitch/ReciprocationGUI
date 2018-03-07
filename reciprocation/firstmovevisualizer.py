@@ -9,8 +9,18 @@ def getmesh(data,threshhold,zero,negone):
     return data[(data["threshhold"]==threshhold) & (data["zero"]==zero) & (data["negone"]==negone)].pivot(index='startmove',columns='response',values='teacher')
 
 def estimateval(data,x,y):
-    xval=data.index[len(data.index[data.index<x])-1]
-    yval=data.columns[len(data.columns[data.columns<y])-1]
+    xindex=len(data.index[data.index<x])-1
+    if xindex<0:
+        xindex=0
+    elif xindex<len(data.index)-1 and abs(data.index[xindex+1]-x)<abs(data.index[xindex]-x):
+        xindex=xindex+1
+    yindex=len(data.columns[data.columns<y])-1
+    if yindex<0:
+        yindex=0
+    elif yindex<len(data.columns)-1 and abs(data.columns[yindex+1]-y)<abs(data.columns[yindex]-y):
+        yindex=yindex+1
+    xval=data.index[xindex]
+    yval=data.columns[yindex]
     return data[xval][yval]
 
 def mkmesh(data,threshhold,zero,negone):
@@ -21,11 +31,10 @@ def mkmesh(data,threshhold,zero,negone):
     fig = plot.figure()
     ax = plot.axes(projection='3d')
     ax.plot_wireframe(np.ones((21, 21)) * data.index.values, (np.ones((21, 21)) * data.index.values).transpose(), data.values)
-    zs = [1.4263, 1.4274, 1.4269, 1.4258, 1.4242, 1.4210, 1.4174, 1.4135, 1.4080, 1.4026, 1.3790, 1.3709, 1.3639,
-          1.3572, 1.3522, 1.3479, 1.3450, 1.3990, 1.3996, 1.3978, 1.3971]
     ax.plot(xs=data.index, ys=responses, zs=zvals, color='red')
     ax.set_xlabel('opponent move')
     ax.set_ylabel('teacher response')
+    ax.set_title('Teacher: ('+str(threshhold)+", "+str(zero)+", "+str(negone))
     fig.show()
 
 class Visualizer(tk.Frame):

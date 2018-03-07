@@ -56,14 +56,45 @@ class staticPlayer:
 
 
 class BucketUCB:
-    def __init__(self):
-        pass
+    def __init__(self,bucketcount):
+        self.bucketcount=bucketcount
+        self.nvals=[0.0 for i in range(bucketcount)]
+        self.totals=[0.0 for i in range(bucketcount)]
+        self.lowerbounds=[i*2.0/bucketcount for i in range(bucketcount)]
+        self.avgpayoffs=[getavgpayoff(l,l+2.0/bucketcount) for l in self.lowerbounds]
+        self.lastmove=None
 
-    def observe(self,move,payoff):
-        pass
+    def reset(self):
+        self.nvals = [0.0 for i in range(self.bucketcount)]
+        self.totals = [0.0 for i in range(self.bucketcount)]
+        self.lastmove = None
 
-    def pickmove(self):
-        pass
+    def clone(self):
+        result=BucketUCB(self.bucketcount)
+        result.nvals=[x for x in self.nvals]
+        result.totals=[x for x in self.totals]
+        result.lowerbounds=self.lowerbounds
+        result.lastmove=self.lastmove
+
+    def __str__(self):
+        return "UCB"
+
+    def __repr__(self):
+        return str(self)
+
+    def getStatus(self):
+        return str(self)
+
+    def getDescription(self):
+        return str(self)
+
+    def respond(self,opponentmove):
+        self.nvals[self.lastmove]=self.nvals[self.lastmove]+1
+        self.totals[self.lastmove]=self.totals[self.lastmove]+opponentmove
+        n=sum(self.nvals)
+        teachingval=0
+        self.lastmove=max([(self.totals[i]/self.nvals[i]+math.sqrt(4*math.log(n)/self.nvals[i])+self.avgpayoff[i]+teachingval,i) for i in range(self.bucketcount)])[1]
+        return self.lowerbounds[self.lastmove]+random.random()*2/self.bucketcount
 
 UCTprior1=[2,1.525,[1,.285,None,None],[1,1.24,None,None]]
 UCTprior2=[4,3.04,[2,.571,[1,-.135,None,None],[1,.706,None,None]],[2,2.47,[1,1.2,None,None],[1,1.27,None,None]]]
