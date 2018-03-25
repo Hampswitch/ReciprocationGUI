@@ -1,13 +1,28 @@
 import math
 import random
 
+import sklearn.gaussian_process as skgp
+import scipy.optimize as spopt
+import numpy as np
+import matplotlib.pyplot as plt
+
 class fastlearner:
     def __init__(self):
         self.moves=[0,.25,.5,.75,1]
         self.payoffs=[None,None,None,None,None]
+        self.lastmove=None
+
+    def respond(self,move):
+        if self.lastmove is not None:
+            self.observe(self.lastmove,move+math.sqrt(1-self.lastmove**2))
+        self.lastmove=self.pickmove()
+        return self.lastmove
 
     def observe(self,move,payoff):
-        self.payoffs[self.moves.index(move)]=payoff
+        try:
+            self.payoffs[self.moves.index(move)]=payoff
+        except ValueError:
+            pass
 
     def pickmove(self):
         if None not in self.payoffs:
@@ -41,6 +56,12 @@ class fastlearner:
         self.moves = [0, .25, .5, .75, 1]
         self.payoffs = [None, None, None, None, None]
 
+    def clone(self):
+        result=fastlearner()
+        result.moves=self.moves
+        result.payoffs=self.payoffs
+        return result
+
 class staticPlayer:
     def __init__(self,response):
         self.response=response
@@ -54,30 +75,35 @@ class staticPlayer:
     def reset(self):
         pass
 
+def eval_point(x,gp,kappa,teach):
+    try:
+        mean, std = gp.predict(np.array(x).reshape(-1,1), return_std=True)
+        return -mean - kappa * std - math.sqrt(1-x[0]**2)-teach(x)
+    except ValueError:
+        print "fail: "+str(x)
 
-class BucketUCB:
-    def __init__(self,bucketcount):
-        self.bucketcount=bucketcount
-        self.nvals=[0.0 for i in range(bucketcount)]
-        self.totals=[0.0 for i in range(bucketcount)]
-        self.lowerbounds=[i*2.0/bucketcount for i in range(bucketcount)]
-        self.avgpayoffs=[getavgpayoff(l,l+2.0/bucketcount) for l in self.lowerbounds]
+class GPUCB:
+    """
+    Gaussian Process UCB
+    """
+    def __init__(self,nu=2.5):
+        self.nu=nu
+        self.gp=skgp.GaussianProcessRegressor(kernel=skgp.kernels.Matern(nu=nu),n_restarts_optimizer=25)
+        self.move=[]
+        self.response=[]
+        self.kappa=1.0
         self.lastmove=None
 
     def reset(self):
-        self.nvals = [0.0 for i in range(self.bucketcount)]
-        self.totals = [0.0 for i in range(self.bucketcount)]
-        self.lastmove = None
+        self.move=[]
+        self.response=[]
 
     def clone(self):
-        result=BucketUCB(self.bucketcount)
-        result.nvals=[x for x in self.nvals]
-        result.totals=[x for x in self.totals]
-        result.lowerbounds=self.lowerbounds
-        result.lastmove=self.lastmove
+        result=GPUCB(self.nu)
+        return result
 
     def __str__(self):
-        return "UCB"
+        return "GPUCB"
 
     def __repr__(self):
         return str(self)
@@ -89,12 +115,125 @@ class BucketUCB:
         return str(self)
 
     def respond(self,opponentmove):
-        self.nvals[self.lastmove]=self.nvals[self.lastmove]+1
-        self.totals[self.lastmove]=self.totals[self.lastmove]+opponentmove
-        n=sum(self.nvals)
-        teachingval=0
-        self.lastmove=max([(self.totals[i]/self.nvals[i]+math.sqrt(4*math.log(n)/self.nvals[i])+self.avgpayoff[i]+teachingval,i) for i in range(self.bucketcount)])[1]
-        return self.lowerbounds[self.lastmove]+random.random()*2/self.bucketcount
+        if self.lastmove is not None:
+            self.update(self.lastmove,opponentmove)
+        self.lastmove=self.pickmove(opponentmove)
+        return self.lastmove
+
+    def update(self,move,response):
+        self.move.append(move)
+        self.response.append(response)
+        self.gp.fit(np.array(self.move).reshape(-1,1),np.array(self.response).reshape(-1,1))
+
+    def pickmove(self,oppmove):
+        result=spopt.minimize(fun=lambda x: eval_point(x,self.gp,self.kappa,lambda x:0),x0=(0,),bounds=np.array(((-.999999,.999999),)),method="L-BFGS-B")
+        return result.x[0]
+
+    def checkpoint(self,x):
+        mean, std = self.gp.predict(np.array(x).reshape(-1, 1), return_std=True)
+        print "Mean: "+str(mean)
+        print "Std: "+str(std)
+        print "Kappa: "+str(self.kappa)
+        print "Own payoff: "+str(math.sqrt(1-x**2))
+        print "Result: "+str(-mean-self.kappa*std-math.sqrt(1-x**2))
+
+    def dispGP(self):
+        mean,std=self.gp.predict(np.arange(-1,1,.01).reshape(-1,1),return_std=True)
+        plt.figure(figsize=(16,9))
+        plt.plot(np.arange(-1,1,.01),mean)
+        plt.fill_between(np.arange(-1,1,.01),np.squeeze(mean)-std,np.squeeze(mean)+std,alpha=.1)
+        plt.scatter(self.move,self.response,c="red",s=50)
+        plt.xlim(-1,1)
+        plt.ylim(-2,2)
+        plt.show()
+
+
+
+class BucketUCB:
+    def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,exploration=4.0):
+        self.bucketcount=bucketcount
+        self.nvals=[None for i in range(bucketcount)]
+        self.totals=[0.0 for i in range(bucketcount)]
+        self.lowerbounds=[i*2.0/bucketcount-1 for i in range(bucketcount)]
+        self.lastmove=None
+        self.splitthreshhold=splitthreshhold
+        self.maxbuckets=maxbuckets
+        self.radial=radial
+        self.exploration=exploration
+        self.splitval=splitval
+        self.minbucketsize=minbucketsize
+
+    def reset(self):
+        self.nvals = [None for i in range(self.bucketcount)]
+        self.totals = [0.0 for i in range(self.bucketcount)]
+        self.lastmove = None
+
+    def clone(self):
+        result=BucketUCB(self.bucketcount,self.splitthreshhold,self.maxbuckets,self.radial)
+        result.nvals=[x for x in self.nvals]
+        result.totals=[x for x in self.totals]
+        result.lowerbounds=self.lowerbounds
+        result.lastmove=self.lastmove
+        return result
+
+    def __str__(self):
+        return "UCB \n"+str(self.nvals)+"\n"+str(self.totals)+"\n"+str(self.lowerbounds)
+
+    def __repr__(self):
+        return str(self)
+
+    def getStatus(self):
+        return str(self)
+
+    def getDescription(self):
+        return str(self)
+
+    def respond(self,opponentmove):
+        if self.lastmove is not None:
+            self.update(self.lastmove,opponentmove)
+        self.lastmove=self.pickmove()
+        if self.radial:
+            return math.sin(math.pi*(self.lowerbounds[self.lastmove]+random.random()*((self.lowerbounds+[1.0])[self.lastmove+1]-self.lowerbounds[self.lastmove]))/2.0)
+        else:
+            return self.lowerbounds[self.lastmove]+random.random()*((self.lowerbounds+[1.0])[self.lastmove+1]-self.lowerbounds[self.lastmove])
+
+    def update(self,bucket,response):
+        if self.nvals[bucket] is None:
+            self.nvals[bucket]=1
+            self.totals[bucket]=response
+        else:
+            self.nvals[bucket] = self.nvals[bucket] + 1
+            self.totals[bucket] = self.totals[bucket] + response
+            if self.splitthreshhold is not None and self.nvals[bucket]>=self.splitthreshhold and \
+                    (self.maxbuckets is None or len(self.nvals)<= self.maxbuckets) and \
+                                    (self.lowerbounds+[1.0])[bucket]-self.lowerbounds[bucket]>self.minbucketsize:
+                if self.splitval is None:
+                    newnvals=None
+                    newtotals=0.0
+                else:
+                    newnvals=self.nvals[bucket]/self.splitval
+                    newtotals=self.totals[bucket]/self.splitval
+                self.nvals[bucket:bucket+1]=[newnvals,newnvals]
+                self.totals[bucket:bucket+1]=[newtotals,newtotals]
+                self.lowerbounds[bucket+1:bucket+1]=[(self.lowerbounds[bucket]+(self.lowerbounds+[1.0])[bucket+1])/2.0]
+
+    def pickmove(self):
+        if None in self.nvals:
+            return random.choice([i for i in range(len(self.nvals)) if self.nvals[i] is None])
+        else:
+            n=sum(self.nvals)
+            teachingval=0
+            if not self.radial:
+                self.status=[(self.totals[i]/self.nvals[i]+
+                                math.sqrt(self.exploration*math.log(n)/self.nvals[i])+
+                                getavgpayoff(self.lowerbounds[i],(self.lowerbounds+[1.0])[i+1])+
+                                teachingval,i) for i in range(self.bucketcount)]
+            else:
+                self.status=[(self.totals[i] / self.nvals[i] +
+                                      math.sqrt(self.exploration * math.log(n) / self.nvals[i]) +
+                                      getavgpayoff(math.sin(math.pi*self.lowerbounds[i]/2.0), math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)) +
+                                      teachingval, i) for i in range(self.bucketcount)]
+        return max(self.status)[1]
 
 UCTprior1=[2,1.525,[1,.285,None,None],[1,1.24,None,None]]
 UCTprior2=[4,3.04,[2,.571,[1,-.135,None,None],[1,.706,None,None]],[2,2.47,[1,1.2,None,None],[1,1.27,None,None]]]

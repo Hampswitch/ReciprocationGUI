@@ -61,7 +61,7 @@ class simpleteacher:
             if negoneresponse-.0001>1+self.zeroresponse:
                 raise ValueError("Opponent motivated to punish")
         if startmove is None:
-            self.startmove=self.threshhold
+            self.startmove=math.sqrt(1-self.threshhold**2)
         else:
             self.startmove=startmove
         self.override=[x for x in override]
