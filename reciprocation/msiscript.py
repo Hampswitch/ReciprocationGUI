@@ -48,6 +48,6 @@ if __name__=="__main__":
 if __name__=="test__main__": # Test speed
     for opp in opponentlist(.707):
         start=time.time()
-        print processopp(opp)
+        print(processopp(opp))
         stop=time.time()
         print (stop-start)
