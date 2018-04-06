@@ -43,11 +43,11 @@ if __name__=="__main__":
     pool=multiprocessing.Pool(processes=poolsize)
     result=pool.map(processopp,opponentlist(threshhold))
     for r in result:
-        print(r)
+        print r
 
 if __name__=="test__main__": # Test speed
     for opp in opponentlist(.707):
         start=time.time()
-        print(processopp(opp))
+        print processopp(opp)
         stop=time.time()
         print (stop-start)
