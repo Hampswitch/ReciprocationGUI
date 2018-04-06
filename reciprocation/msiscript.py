@@ -32,7 +32,6 @@ def processopp(opp):
     output=""
     for startmove in [-x for x in rvals[-1:0:-1]]+rvals:
         for initresponse in [-x for x in rvals[-1:0:-1]]+rvals:
-            print "processopp:"+str(time.time())
             learner=knn.KNNUCBplayer(2,.2,1.0,startmove)
             teacher=teachers.simpleteacher(threshhold,zero,negone,override=[initresponse])
             result=ga.evaluate(learner,teacher,1000,.99,10)
