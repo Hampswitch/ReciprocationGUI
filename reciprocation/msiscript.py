@@ -4,7 +4,6 @@ import genetic_alg as ga
 import teachingstrategies as teachers
 import multiprocessing
 import math
-import sys
 import time
 
 rvals=[0.0,.156,.309,.454,.588,.707,.809,.891,.951,.988,1.0]
@@ -39,8 +38,8 @@ def processopp(opp):
     return output
 
 if __name__=="__main__":
-    poolsize=int(sys.argv[1])
-    threshhold=float(sys.argv[2])
+    poolsize=20
+    threshhold=.707
     pool=multiprocessing.Pool(processes=poolsize)
     result=pool.map(processopp,opponentlist(threshhold))
     for r in result:
