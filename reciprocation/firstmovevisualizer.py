@@ -68,7 +68,7 @@ class Visualizer(tk.Frame):
         mkmesh(self.data,self.threshhold.get(),self.zero.get(),self.negone.get())
 
 if __name__=="__main__":
-    data=pandas.read_csv("firstmovedata.csv")
+    data=pandas.read_csv("firstmoveUCTdata.csv")
     master = tk.Tk()
     Visualizer(master,data).pack(side=tk.TOP)
     tk.mainloop()

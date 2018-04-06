@@ -135,7 +135,7 @@ if __name__=="__maain__":
                         learner=learners.player(learner=learners.UCTlearner(c=1.0),startmove=startmove)
                         teacher=teachers.simpleteacher(threshhold,zero,negone,override=[initresponse])
                         result=ga.evaluate(learner,teacher,1000,.99,1000)
-                        f=open("firstmovedata.csv","a")
+                        f=open("firstmoveUCTdata.csv","a")
                         f.write(", ".join([str(x) for x in [threshhold,zero,negone,startmove,initresponse,result[2]]])+"\n")
                         f.close()
 

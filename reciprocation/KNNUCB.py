@@ -25,7 +25,7 @@ class KNN:
         if nval>0:
             return sum(neighborscores)/len(neighborscores),math.sqrt(self.explore*math.log(len(self.history))/nval)
         else:
-            return sum(neighborscores)/len(neighborscores),math.sqrt(self.explore*math.log(2.0/(2*self.nwidth))/1)
+            return sum(neighborscores)/len(neighborscores),math.sqrt(self.explore*math.log(len(self.history))*2)
 
     def reset(self):
         self.history=sortedcontainers.SortedList()
@@ -42,6 +42,7 @@ class KNNUCBplayer:
 
     def reset(self):
         self.knn.reset()
+        self.lastmove=None
 
     def __str__(self):
         pass

@@ -5,6 +5,7 @@ import teachingstrategies as teachers
 import multiprocessing
 import math
 import sys
+import time
 
 rvals=[0.0,.156,.309,.454,.588,.707,.809,.891,.951,.988,1.0]
 opplist=[(.988,-.692,0.0),(.951,-.382,0.0),(.891,-.092,0.0),(.809,0.0,0.0),
@@ -31,6 +32,7 @@ def processopp(opp):
     output=""
     for startmove in [-x for x in rvals[-1:0:-1]]+rvals:
         for initresponse in [-x for x in rvals[-1:0:-1]]+rvals:
+            print "processopp:"+str(time.time())
             learner=knn.KNNUCBplayer(2,.2,1.0,startmove)
             teacher=teachers.simpleteacher(threshhold,zero,negone,override=[initresponse])
             result=ga.evaluate(learner,teacher,1000,.99,10)
@@ -44,3 +46,10 @@ if __name__=="__main__":
     result=pool.map(processopp,opponentlist(threshhold))
     for r in result:
         print r
+
+if __name__=="test__main__": # Test speed
+    for opp in opponentlist(.707):
+        start=time.time()
+        print processopp(opp)
+        stop=time.time()
+        print (stop-start)
