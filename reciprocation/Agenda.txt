@@ -1,21 +1,6 @@
 
-Look at simulated annealing algorithm - improve speed. check consistency of results
-    Things to try:
-        Perturb 1 point at a time instead of all points
-        Create explicit schedule list instead of function-driven one
-        Separate threshhold and perturb schedules
-    Things to report:
-        Report evaluation at each step (including estimate of mean and variance)
+datageneration
 
-Performance comparisons
-    Teaching strats:
-        reciprocal
-        achievableset
-        achievableaverageset
-    Learning strats:
-        UCT
-        UCT-acceptable
-            w/ schedule and w/o schedule
-        UCT-envy
-
-write up essay on setting schedules
+General performance:
+    teaching strategy params vs. learning strategy params
+        doesn't need to be hugely detailed - goal is to generate

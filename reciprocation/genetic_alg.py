@@ -102,14 +102,12 @@ def evaluate(strat1, strat2, iterations, discountfactor=1.0, repetitions=1):
     score1list=[]
     score2list=[]
     move=None
-    strat1=strat1.clone()
-    strat2=strat2.clone()
-    strat1.reset()
-    strat2.reset()
     for j in range(repetitions):
         normalize = 0.0
         score1 = 0.0
         score2 = 0.0
+        strat1.reset()
+        strat2.reset()
         for i in range(iterations):
             move=strat1.respond(move)
             score1=score1+curdiscount*math.sqrt(1-move**2)
@@ -119,8 +117,6 @@ def evaluate(strat1, strat2, iterations, discountfactor=1.0, repetitions=1):
             score2=score2+curdiscount*math.sqrt(1-move**2)
             normalize=normalize+curdiscount
             curdiscount = curdiscount * discountfactor
-        strat1.reset()
-        strat2.reset()
         move=None
         curdiscount=1.0
         score1list.append(score1/normalize)

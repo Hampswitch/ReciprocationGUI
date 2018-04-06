@@ -59,6 +59,8 @@ class PointSelector(tk.Frame):
         yc = (205 - y) / 200.0
         self.xlist.append(xc)
         self.ylist.append(yc)
+        self.lastx=xc
+        self.lasty=yc
         self.inputcanvas.create_oval(x-1,y-1,x+1,y+1)
         self.changepoints(self.xlist,self.ylist)
 
