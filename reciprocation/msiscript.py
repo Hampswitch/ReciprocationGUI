@@ -41,7 +41,7 @@ def processopp(opp):
 
 if __name__=="__main__":
     poolsize=int(sys.argv[1])
-    threshhold=int(sys.argv[2])
+    threshhold=float(sys.argv[2])
     pool=multiprocessing.Pool(processes=poolsize)
     result=pool.map(processopp,opponentlist(threshhold))
     for r in result:
