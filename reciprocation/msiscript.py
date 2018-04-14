@@ -2,6 +2,7 @@
 import KNNUCB as knn
 import genetic_alg as ga
 import teachingstrategies as teachers
+import scriptutil as util
 import multiprocessing
 import math
 import time
@@ -31,10 +32,7 @@ def processopp(opp):
     output=""
     for startmove in [-x for x in rvals[-1:0:-1]]+rvals:
         for initresponse in [-x for x in rvals[-1:0:-1]]+rvals:
-            learner=knn.KNNUCBplayer(2,.2,1.0,startmove)
-            teacher=teachers.simpleteacher(threshhold,zero,negone,override=[initresponse])
-            result=ga.evaluate(learner,teacher,1000,.99,10)
-            output=output+", ".join([str(x) for x in [threshhold,zero,negone,startmove,initresponse,result[2],result[0]]])+"\n"
+            output=output+util.knn_simple_evaluate(1000,-1,.99,startmove,initresponse,2,.2,1.0,threshhold,zero,negone)+"\n"
     return output
 
 if __name__=="__main__":
