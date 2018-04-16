@@ -25,7 +25,7 @@ def opponentlist(threshhold=None):
             for n in [-x for x in rvals]:
                 yield (t, z, n)
 
-def processopp(opp):
+def processoppmesh(opp):
     threshhold=opp[0]
     zero=opp[1]
     negone=opp[2]
@@ -35,17 +35,42 @@ def processopp(opp):
             output=output+util.knn_simple_evaluate(1000,-1,.99,startmove,initresponse,2,.2,1.0,threshhold,zero,negone)+"\n"
     return output
 
+def processoppsingle(opp):
+    return util.knn_simple_evaluate(1000,-1,.99,None,None,2,.2,1.0,opp[0],opp[1],opp[2])
+
+def processknn(opp):
+    output=""
+    for K in []:
+        for nwidth in []:
+            for explore in []:
+                output=output+util.knn_simple_evaluate(1000,-1,.99,None,None,K,nwidth,explore,opp[0],opp[1],opp[2])+"\n"
+
 if __name__=="__main__":
+    print "Firstmove Mesh"
     poolsize=20
     threshhold=.707
     pool=multiprocessing.Pool(processes=poolsize)
-    result=pool.map(processopp,opponentlist(threshhold))
+    result=pool.map(processoppmesh, opplist)
     for r in result:
         print r
 
-if __name__=="test__main__": # Test speed
+if __name__=="knn__main__":
+    print "KNN parameters"
+    pool=multiprocessing.Pool(processes=20)
+    result=pool.map(processknn,opplist)
+    for r in result:
+        print r
+
+if __name__=="simple__main__":
+    print "Simple Parameters"
+    pool=multiprocessing.Pool(processes=20)
+    result=pool.map(processoppsingle,opponentlist())
+    for r in result:
+        print r
+
+if __name__=="time__main__": # Test speed
     for opp in opponentlist(.707):
         start=time.time()
-        print processopp(opp)
+        print processoppmesh(opp)
         stop=time.time()
         print (stop-start)
