@@ -59,16 +59,18 @@ class KNNUCBplayer:
     def respond(self,oppmove):
         if self.lastmove is not None:
             self.update(oppmove)
-            self.lastmove=self.pickmove()
+            self.lastmove=self.pickmove(oppmove)
         else:
             self.lastmove=self.firstmove
+            if self.lastmove is None:
+                self.lastmove=0.0
         return self.lastmove
 
     def update(self,oppmove):
         if self.lastmove is not None:
             self.knn.observe(self.lastmove,oppmove)
 
-    def pickmove(self):
+    def pickmove(self,oppmove):
         maxscore=None
         maxmove=None
         for move in np.arange(-1,1,.01):

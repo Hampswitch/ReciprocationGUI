@@ -40,10 +40,11 @@ def processoppsingle(opp):
 
 def processknn(opp):
     output=""
-    for K in []:
-        for nwidth in []:
-            for explore in []:
+    for K in [1,2,3,4,5]:
+        for nwidth in [.05,.1,.2,.4,.8]:
+            for explore in [.25,.5,1.0,2.0,4.0]:
                 output=output+util.knn_simple_evaluate(1000,-1,.99,None,None,K,nwidth,explore,opp[0],opp[1],opp[2])+"\n"
+    return output
 
 if __name__=="__main__":
     print "Firstmove Mesh"
