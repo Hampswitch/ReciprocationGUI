@@ -23,7 +23,7 @@ def estimateval(data,x,y):
     yval=data.columns[yindex]
     return data[xval][yval]
 
-def mkmesh(data,threshhold,zero,negone):
+def mkfirstmovemesh(data, threshhold, zero, negone):
     data=getmesh(data,threshhold,zero,negone)
     teacher=teachers.simpleteacher(threshhold,zero,negone)
     responses=[teacher.respond(x) for x in data.index]
@@ -37,7 +37,7 @@ def mkmesh(data,threshhold,zero,negone):
     ax.set_title('Teacher: ('+str(threshhold)+", "+str(zero)+", "+str(negone))
     fig.show()
 
-class Visualizer(tk.Frame):
+class FirstMoveVisualizer(tk.Frame):
     def __init__(self,master,data):
         tk.Frame.__init__(self,master)
         self.data=data
@@ -65,10 +65,15 @@ class Visualizer(tk.Frame):
         tk.Button(self,text="Make Mesh",command=self.mkmesh).pack(side=tk.LEFT)
 
     def mkmesh(self):
-        mkmesh(self.data,self.threshhold.get(),self.zero.get(),self.negone.get())
+        mkfirstmovemesh(self.data, self.threshhold.get(), self.zero.get(), self.negone.get())
 
-if __name__=="__main__":
+
+
+if __name__=="firstmove__main__":
     data=pandas.read_csv("firstmoveUCTdata.csv")
     master = tk.Tk()
-    Visualizer(master,data).pack(side=tk.TOP)
+    FirstMoveVisualizer(master, data).pack(side=tk.TOP)
     tk.mainloop()
+
+if __name__=="":
+    data=pandas.read_csv("knnsimpledata.csv")

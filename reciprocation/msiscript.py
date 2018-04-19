@@ -46,7 +46,7 @@ def processknn(opp):
                 output=output+util.knn_simple_evaluate(1000,-1,.99,None,None,K,nwidth,explore,opp[0],opp[1],opp[2])+"\n"
     return output
 
-if __name__=="__main__":
+if __name__=="mesh__main__":
     print "Firstmove Mesh"
     poolsize=20
     threshhold=.707
@@ -69,9 +69,9 @@ if __name__=="simple__main__":
     for r in result:
         print r
 
-if __name__=="time__main__": # Test speed
-    for opp in opponentlist(.707):
+if __name__=="__main__": # Test speed
+    for opp in opplist:
         start=time.time()
-        print processoppmesh(opp)
+        print processoppsingle(opp)
         stop=time.time()
         print (stop-start)
