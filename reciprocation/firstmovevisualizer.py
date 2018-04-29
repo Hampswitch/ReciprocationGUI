@@ -5,7 +5,14 @@ import teachingstrategies as teachers
 import mpl_toolkits.mplot3d as mplot3d
 import Tkinter as tk
 
-def getmesh(data,threshhold,zero,negone):
+def getmesh(data,fixedvalues,xcolumn,ycolumn,value):
+    for k,v in fixedvalues.items():
+        data=data[data[k]==v]
+    result=data.groupby(by=[xcolumn,ycolumn]).mean().reset_index().pivot(index=xcolumn,columns=ycolumn,values=value)
+    # remove NAN columns, change NAN to min
+    return result.fillna(result.min().min())
+
+def getfirstmovemesh(data, threshhold, zero, negone):
     return data[(data["threshhold"]==threshhold) & (data["zero"]==zero) & (data["negone"]==negone)].pivot(index='startmove',columns='response',values='teacher')
 
 def estimateval(data,x,y):
@@ -23,8 +30,19 @@ def estimateval(data,x,y):
     yval=data.columns[yindex]
     return data[xval][yval]
 
+def mkmesh(data,xlabel,ylabel,title):
+    fig=plot.figure()
+    ax=plot.axes(projection='3d')
+    xsize=len(data.index)
+    ysize=len(data.columns)
+    ax.plot_wireframe(np.ones((xsize,ysize))*data.index.values.reshape(-1,1),(np.ones((ysize,xsize))*data.columns.values.reshape(-1,1)).transpose(),data.values)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    fig.show()
+
 def mkfirstmovemesh(data, threshhold, zero, negone):
-    data=getmesh(data,threshhold,zero,negone)
+    data=getfirstmovemesh(data, threshhold, zero, negone)
     teacher=teachers.simpleteacher(threshhold,zero,negone)
     responses=[teacher.respond(x) for x in data.index]
     zvals=[estimateval(data,x,y) for x,y in zip(data.index,responses)]
@@ -67,7 +85,50 @@ class FirstMoveVisualizer(tk.Frame):
     def mkmesh(self):
         mkfirstmovemesh(self.data, self.threshhold.get(), self.zero.get(), self.negone.get())
 
+class knnsimplevisualizer(tk.Frame):
+    def __init__(self,master,data):
+        tk.Frame.__init__(self,master)
+        self.data=data
+        self.columnvars={}
+        self.columnvalues={}
+        self.stringvalues={}
+        columns=["repetitions","discountfactor","startmove","response","K","nwidth","explore","threshhold","zero","negone"]
+        tk.Label(self,text="Set values").pack(side=tk.TOP)
+        for column in columns:
+            f=tk.Frame(self)
+            f.pack(side=tk.TOP,fill=tk.X)
+            tk.Label(f,text=column).pack(side=tk.LEFT,fill=tk.X)
+            self.columnvalues[column]=list(data[column].unique())
+            self.stringvalues[column]=[str(x) for x in self.columnvalues[column]]
+            self.columnvars[column]=tk.StringVar()
+            tk.OptionMenu(f,self.columnvars[column],*(self.stringvalues[column])).pack(side=tk.RIGHT)
+        tk.Label(self,text="Axes").pack(side=tk.TOP)
+        self.xaxis=tk.StringVar()
+        self.yaxis=tk.StringVar()
+        self.zaxis=tk.StringVar()
+        f=tk.Frame(self)
+        f.pack(side=tk.TOP)
+        tk.Label(f,text="X-axis").pack(side=tk.LEFT)
+        tk.OptionMenu(f,self.xaxis,"startmove","response","K","nwidth","explore","threshhold","zero","negone").pack(side=tk.TOP)
+        f = tk.Frame(self)
+        f.pack(side=tk.TOP)
+        tk.Label(f, text="Y-axis").pack(side=tk.LEFT)
+        tk.OptionMenu(f,self.yaxis,"startmove","response","K","nwidth","explore","threshhold","zero","negone").pack(side=tk.TOP)
+        f = tk.Frame(self)
+        f.pack(side=tk.TOP)
+        tk.Label(f, text="Z-axis").pack(side=tk.LEFT)
+        tk.OptionMenu(f,self.zaxis,"knnscore","simplescore").pack(side=tk.TOP)
+        tk.Button(self,text="Make Mesh",command=self.mkmesh).pack(side=tk.TOP)
 
+    def mkmesh(self):
+        setdict={}
+        for column,var in self.columnvars.items():
+            if column not in [self.xaxis.get(),self.yaxis.get()]:
+                v=var.get()
+                if v in self.stringvalues[column]:
+                    setdict[column]=self.columnvalues[column][self.stringvalues[column].index(v)]
+        data=getmesh(self.data,setdict,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
+        mkmesh(data,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
 
 if __name__=="firstmove__main__":
     data=pandas.read_csv("firstmoveUCTdata.csv")
@@ -75,5 +136,8 @@ if __name__=="firstmove__main__":
     FirstMoveVisualizer(master, data).pack(side=tk.TOP)
     tk.mainloop()
 
-if __name__=="":
-    data=pandas.read_csv("knnsimpledata.csv")
+if __name__=="__main__":
+    data=pandas.read_csv("results/knnsimple.csv")
+    master=tk.Tk()
+    knnsimplevisualizer(master,data).pack(side=tk.TOP)
+    tk.mainloop()
