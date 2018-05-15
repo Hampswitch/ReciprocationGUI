@@ -14,7 +14,7 @@ def processUCT(params):
     return util.UCT_simple_evaluate(1000,1,.99,params[0],params[1],1.0,0,params[3],False,params[2][0],params[2][1],params[2][2])
 
 if __name__=="__main__":
-    pool=multiprocessing.Pool(processes=3)
+    pool=multiprocessing.Pool(processes=20)
     result=pool.map(processUCT,itertools.product([-x for x in rvals[-1:0:-1]]+rvals,[-x for x in rvals[-1:0:-1]]+rvals,opplist,[2,3,4]))
     for r in result:
         print r
