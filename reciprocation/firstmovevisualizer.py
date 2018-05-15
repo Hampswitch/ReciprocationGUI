@@ -5,12 +5,20 @@ import teachingstrategies as teachers
 import mpl_toolkits.mplot3d as mplot3d
 import Tkinter as tk
 
-def getmesh(data,fixedvalues,xcolumn,ycolumn,value):
+def getmesh(data,fixedvalues,xcolumn,ycolumn,value,xdiscard=["None"],ydiscard=["None"]):
     for k,v in fixedvalues.items():
         data=data[data[k]==v]
+    data=data[~data[xcolumn].isin(xdiscard)]
+    data=data[~data[ycolumn].isin(ydiscard)]
+    data[xcolumn]=data[xcolumn].astype(float)
+    data[ycolumn]=data[ycolumn].astype(float)
     result=data.groupby(by=[xcolumn,ycolumn]).mean().reset_index().pivot(index=xcolumn,columns=ycolumn,values=value)
     # remove NAN columns, change NAN to min
-    return result.fillna(result.min().min())
+    result=result.fillna(result.min().min())
+    result.index=[float(x) for x in result.index]
+    result.columns=[float(x) for x in result.columns]
+    result=result.reindex(index=sorted(result.index),columns=sorted(result.columns))
+    return result
 
 def getfirstmovemesh(data, threshhold, zero, negone):
     return data[(data["threshhold"]==threshhold) & (data["zero"]==zero) & (data["negone"]==negone)].pivot(index='startmove',columns='response',values='teacher')

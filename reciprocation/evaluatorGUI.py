@@ -33,13 +33,15 @@ class SimpleTeacherSelector(tk.Frame):
         tk.Frame.__init__(self, master)
 
         tk.Label(self,text="Simple Teacher").pack(side=tk.TOP)
-        self.params=ParameterPanel(self,[("Threshhold: ",tk.DoubleVar,.7),("Zero Response: ",tk.DoubleVar,0),("-1 Response: ",tk.DoubleVar,0)])
+        self.params=ParameterPanel(self,[("Threshhold: ",tk.DoubleVar,.7),("Zero Response: ",tk.DoubleVar,0),("-1 Response: ",tk.DoubleVar,0),("startmove",tk.DoubleVar,2.0)])
         self.params.pack(side=tk.TOP)
 
     def getPlayer(self):
         params=self.params.getparameters()
-        return ts.simpleteacher(params[0],params[1],params[2])
-
+        if abs(params[3])>1.0:
+            return ts.simpleteacher(params[0],params[1],params[2])
+        else:
+            return ts.simpleteacher(params[0],params[1],params[2],override=[params[3]])
     def __str__(self):
         return "Simple Teacher "+str(self.params.getparameters())
 
@@ -49,13 +51,14 @@ class UCTSelector(tk.Frame):
         tk.Label(self,text="Upper Confidence Tree").pack(side=tk.TOP)
         self.params=ParameterPanel(self,[("exploration",tk.DoubleVar,1),
                                          ("radial",tk.BooleanVar,False),
-                                         ("prior levels",tk.IntVar,-1)])
+                                         ("prior levels",tk.IntVar,-1),
+                                         ("bucket count",tk.IntVar,2)])
         self.params.pack(side=tk.TOP)
 
     def getPlayer(self):
         params=self.params.getparameters()
         prior=[None,ls.UCTprior1,ls.UCTprior2,ls.UCTprior3,None][params[2]]
-        return ls.player(learner=ls.UCTlearner(c=params[0],initdata=prior),radial=params[1])
+        return ls.player(learner=ls.UCTlearner(c=params[0],initdata=prior,bucketcount=params[3]),radial=params[1])
 
     def __str__(self):
         return "UCT: "+str(self.params.getparameters())
@@ -129,7 +132,7 @@ class KNNselector(tk.Frame):
         tk.Frame.__init__(self, master)
         tk.Label(self, text="KNN UCB").pack(side=tk.TOP)
         self.params = ParameterPanel(self, [("K: ", tk.IntVar, 2.0), ("nwidth: ", tk.DoubleVar, 0.1),
-                                            ("explore: ", tk.DoubleVar, 1.0)])
+                                            ("explore: ", tk.DoubleVar, 1.0),("startmove",tk.DoubleVar,-2.0)])
         self.params.pack(side=tk.TOP)
 
     def __str__(self):
@@ -138,7 +141,10 @@ class KNNselector(tk.Frame):
 
     def getPlayer(self):
         params=self.params.getparameters()
-        return knn.KNNUCBplayer(params[0],params[1],params[2])
+        if abs(params[3])>1.0:
+            return knn.KNNUCBplayer(params[0],params[1],params[2])
+        else:
+            return knn.KNNUCBplayer(params[0],params[1],params[2],params[3])
 
 class PlayerSelector(tk.Frame):
     def __init__(self,master):

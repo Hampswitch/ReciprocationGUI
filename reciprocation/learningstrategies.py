@@ -83,7 +83,7 @@ class GPUCB:
     """
     Gaussian Process UCB
     """
-    def __init__(self,kernel=None,kappa=1.0,history_window=100,minimizestarts=10,gpstarts=25,fitfreq=10,alpha=1e-10):
+    def __init__(self,kernel=None,kappa=1.0,history_window=100,minimizestarts=10,gpstarts=25,fitfreq=10,alpha=1e-10,startmove=None):
         if kernel is None:
             kernel=skgp.kernels.RBF(length_scale=1.0,length_scale_bounds=(.2,100))+skgp.kernels.WhiteKernel(noise_level=1.0)
             self.gp=skgp.GaussianProcessRegressor(kernel=kernel,n_restarts_optimizer=gpstarts,alpha=alpha)
@@ -102,6 +102,7 @@ class GPUCB:
         self.minimizestarts=minimizestarts
         self.fitfreq=fitfreq
         self.gpparams=None
+        self.startmove=startmove
 
     def reset(self): # TODO Check for bugs in reset/clone
         self.n=0
@@ -158,6 +159,8 @@ class GPUCB:
             del self.gpparams['k2']
 
     def pickmove(self,oppmove):
+        if self.startmove is not None and oppmove is None:
+            return self.startmove
         maxresult=None
         for i in range(self.minimizestarts):
             result=spopt.minimize(fun=lambda x: eval_point(x,self.gp,self.kappa,lambda x:0),x0=(2*random.random()-1,),bounds=np.array(((-1.0,1.0),)),method="L-BFGS-B")
@@ -287,12 +290,13 @@ def getavgpayoff(start,stop):
     return (stopval-startval)/(stop-start)
 
 class UCTlearner:
-    def __init__(self,c=1.0,initdata=None,maxdepth=None):
+    def __init__(self,c=1.0,initdata=None,maxdepth=None,bucketcount=2):
         if initdata is not None:
             self.data=initdata
         else:
-            self.data=[0,0,None,None]
+            self.data=[0,0]+[None]*bucketcount
         self.C=c
+        self.bucketcount=bucketcount
         self.initdata=initdata
         self.maxdepth=maxdepth
 
@@ -300,10 +304,10 @@ class UCTlearner:
         if self.initdata is not None:
             self.data=self.initdata
         else:
-            self.data=[0,0,None,None]
+            self.data=[0,0]+[None]*self.bucketcount
 
     def clone(self):
-        return UCTlearner(self.C,self.initdata,self.maxdepth)
+        return UCTlearner(self.C,self.initdata,self.maxdepth,self.bucketcount)
 
     def __str__(self):
         return "UCT (c="+str(self.C)+") "+str(self.getTree(levels=3))
@@ -327,23 +331,17 @@ class UCTlearner:
         curnode[1] += payoff
         curmin = -1.0
         curmax = 1.0
-        if move > (curmin + curmax) / 2:
-            nextnode = 3
-            curmin = (curmin + curmax) / 2
-        else:
-            nextnode = 2
-            curmax = (curmin + curmax) / 2
+        nextnode=2+int(self.bucketcount*(move-curmin)/(curmax-curmin))
+        curmax=curmin+(curmax-curmin)*(nextnode-1)/self.bucketcount
+        curmin=curmin+(curmax-curmin)*(nextnode-2)/self.bucketcount
         while curnode[nextnode] is not None:
             curnode = curnode[nextnode]
             curnode[0] += 1
             curnode[1] += payoff
-            if move > (curmin + curmax) / 2:
-                nextnode = 3
-                curmin = (curmin + curmax) / 2
-            else:
-                nextnode = 2
-                curmax = (curmin + curmax) / 2
-        curnode[nextnode] = [1, payoff, None, None]
+            nextnode = 2 + int(self.bucketcount * (move - curmin) / (curmax - curmin))
+            curmax = curmin + (curmax - curmin) * (nextnode - 1) / self.bucketcount
+            curmin = curmin + (curmax - curmin) * (nextnode - 2) / self.bucketcount
+        curnode[nextnode] = [1, payoff]+[None]*self.bucketcount
 
     def pickmove(self,c=None,extradata=False,tmove=None,twt=None,payofffunc=None):
         if c is None:
@@ -356,27 +354,21 @@ class UCTlearner:
                 payofffunc=lambda x,y: twt if tmove>x and tmove<y else 0.0
             else:
                 payofffunc=lambda x,y: 0.0
-        while curnode[2] is not None and curnode[3] is not None:
-            leftavg=curnode[2][1] / curnode[2][0]
-            rightavg=curnode[3][1] / curnode[3][0]
-            leftexplore=c*math.sqrt(2*math.log(curnode[0])/curnode[2][0])
-            rightexplore=c*math.sqrt(2*math.log(curnode[0])/curnode[3][0])
-            leftteaching=payofffunc(curmin,(curmax+curmin)/2)
-            rightteaching=payofffunc((curmax+curmin)/2,curmax)
-            if leftavg+leftexplore+leftteaching>rightavg+rightexplore+rightteaching:
-                curnode = curnode[2]
-                curmax = (curmin + curmax) / 2
-            else:
-                curnode = curnode[3]
-                curmin = (curmin + curmax) / 2
-        if curnode[2] is None and curnode[3] is None:
-            result = curmin + (curmax - curmin) * random.random()
-        elif curnode[2] is None:
-            curmax = (curmin + curmax) / 2
-            result = curmin + (curmax - curmin) * random.random()
-        else:
-            curmin = (curmin + curmax) / 2
-            result = curmin + (curmax - curmin) * random.random()
+        while None not in curnode:
+            avglist=[node[1]/node[0] for node in curnode[2:]]
+            explorelist=[c*math.sqrt(2*math.log(curnode[0])/node[0]) for node in curnode[2:]]
+            teachlist=[payofffunc(curmin+i*(curmax-curmin)/self.bucketcount,curmin+(i+1)*(curmax-curmin)/self.bucketcount) for i in range(self.bucketcount)]
+            maxval=avglist[0]+explorelist[0]+teachlist[0]
+            maxnode=0
+            for i in range(1,self.bucketcount):
+                if avglist[i]+explorelist[i]+teachlist[i]>maxval:
+                    maxval=avglist[i]+explorelist[i]+teachlist[i]
+                    maxnode=i
+            curnode=curnode[maxnode+2]
+            curmin=curmin+maxnode*(curmax-curmin)/self.bucketcount
+            curmax=curmin+(maxnode+1)*(curmax-curmin)/self.bucketcount
+        nonelist=[i for i in range(self.bucketcount) if curnode[i+2] is None]
+        result=curmin+random.choice(nonelist)*(curmax-curmin)/self.bucketcount + random.random()*(curmax-curmin)/self.bucketcount
         if extradata:
             return (curnode[0],curnode[1],curmin,curmax)
         return result

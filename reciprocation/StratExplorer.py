@@ -15,7 +15,7 @@ def checkbounds(p):
     return (x,y)
 
 class functioncontrol(tk.Frame):
-    def __init__(self,master,pointlist=None,command=None):
+    def __init__(self,master,pointlist=None,command=None,simpleteachercontrol=False):
         tk.Frame.__init__(self,master)
         self.displaycanvas=tk.Canvas(self, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
         self.displaycanvas.pack(side=tk.TOP)
@@ -30,12 +30,48 @@ class functioncontrol(tk.Frame):
         self.displaycanvas.create_line(5,55,205,55,fill="light grey")
         self.displaycanvas.create_line(5,105,205,105,fill="grey")
         self.displaycanvas.create_line(5,155,205,155,fill="light grey")
+        if simpleteachercontrol:
+            self.threshholdvar=tk.DoubleVar()
+            self.threshholdvar.set(.707)
+            self.zerovar=tk.DoubleVar()
+            self.negonevar=tk.DoubleVar()
+            self.resolutionvar=tk.IntVar()
+            self.resolutionvar.set(10)
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Threshhold:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.threshholdvar).pack(side=tk.LEFT)
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Zero Response:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.zerovar).pack(side=tk.LEFT)
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Negative One Response:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.negonevar).pack(side=tk.LEFT)
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
+            tk.Button(self,text="Set Strategy",command=self.setpointlist).pack(side=tk.TOP)
         self.pointlist=pointlist
         if self.pointlist is None:
             self.pointlist=[]
         self.command=command
         self.__drawpointlist(self.pointlist,False)
         self.dragging=False
+
+    def setpointlist(self):
+        try:
+            strat=teachingstrategies.simpleteacher(self.threshholdvar.get(),self.zerovar.get(),self.negonevar.get())
+        except ValueError:
+            t=self.threshholdvar.get()
+            self.zerovar.set(2*math.sqrt(1-t*t)-1.01)
+            strat = teachingstrategies.simpleteacher(self.threshholdvar.get(), self.zerovar.get(), self.negonevar.get())
+        resolution=self.resolutionvar.get()
+        x=(resolution-1)/2.0
+        self.pointlist=[(2*(i-x)/x,2*strat.respond((i-x)/x)) for i in range(resolution)]
+        self.__drawpointlist(self.pointlist)
 
     def getValue(self, x):
         if x==2 and len(self.pointlist)>0 and self.pointlist[-1][0]==2:
@@ -111,10 +147,16 @@ class giftDisplay(tk.Frame):
         tk.Label(self,text="Opponent Move").pack(side=tk.TOP)
         self.oppmove=tk.Scale(self, from_=-1, to=1, resolution=.01,orient=tk.HORIZONTAL,length=200,command=command)
         self.oppmove.pack(side=tk.TOP)
+        frame=tk.Frame(self)
+        frame.pack(side=tk.TOP)
         tk.Label(self,text="Response Function").pack(side=tk.TOP)
         self.strat=teachingstrategies.simpleteacher(.95,-1,-1)
-        self.stratcontrol=functioncontrol(self,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)])
-        self.stratcontrol.pack(side=tk.TOP)
+        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],simpleteachercontrol=True)
+        self.stratcontrol.pack(side=tk.LEFT)
+        self.funccanvas = tk.Canvas(frame, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
+        self.funccanvas.pack(side=tk.LEFT)
+        self.funccanvas.create_line(5, 105, 205, 105)
+        self.funccanvas.create_line(105, 5, 105, 205)
 
 
     def _getstrat(self):
@@ -124,6 +166,7 @@ class giftDisplay(tk.Frame):
     def drawprefs(self,xpref,ypref,xatt,yatt,xoppwt,yoppwt,xenvy,yenvy):
         points=3600
         self.displaycanvas.delete("pref")
+        self.funccanvas.delete("pref")
         for a in [2*math.pi*x/points for x in range(points)]:
             xpayoff=2*math.sin(a)
             ypayoff=2*math.cos(a)
@@ -161,6 +204,20 @@ class giftDisplay(tk.Frame):
         self.displaycanvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill="green",tags="pref")
         (x,y)=toCanvas(m+math.sqrt(1-r**2),r+math.sqrt(1-m**2),400)
         self.displaycanvas.create_oval(x - 2, y - 2, x + 2, y + 2, fill="yellow",tags="pref")
+        linecoords=[]
+        for i in range(201):
+            xpayoff=(i-100.0)/100.0
+            ypayoff=math.sqrt(1-xpayoff**2)
+            response=strat.respond(xpayoff)
+            ypayoff=ypayoff+response
+            yvalue=ypref.getValue(ypayoff)
+            yoppvalue=yatt.getValue(xpayoff)
+            yenvyvalue=max(0,(xpayoff-ypayoff)*yenvy)
+            linecoords.append(5+(xpayoff+1.0)*100)
+            linecoords.append(205-50*(yvalue*(1-yoppwt)+yoppvalue*yoppwt-yenvyvalue+2))
+        self.funccanvas.create_line(linecoords,tags="pref")
+
+
 
 class stratexplorer(tk.Frame):
     def __init__(self,master):
