@@ -331,7 +331,7 @@ class UCTlearner:
         curnode[1] += payoff
         curmin = -1.0
         curmax = 1.0
-        nextnode=2+int(self.bucketcount*(move-curmin)/(curmax-curmin))
+        nextnode=2+min(self.bucketcount-1,int(self.bucketcount*(move-curmin)/(curmax-curmin)))
         curmax=curmin+(curmax-curmin)*(nextnode-1)/self.bucketcount
         curmin=curmin+(curmax-curmin)*(nextnode-2)/self.bucketcount
         while curnode[nextnode] is not None:
