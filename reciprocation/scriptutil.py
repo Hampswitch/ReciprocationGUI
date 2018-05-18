@@ -65,3 +65,14 @@ def GPUCB_simple_evaluate(repetitions,iteration,discountfactor,startmove,respons
         teacher=teachers.simpleteacher(threshhold,zero,negone)
     result=ga.evaluate(learner,teacher,repetitions,discountfactor,1)
     return ",".join([str(x) for x in [repetitions,iteration,discountfactor,startmove,response,threshhold,zero,negone,result[0],result[2]]])
+
+ucb_simple_header="repetitions,iteration,discountfactor,startmove,response,bucketcount,radial,exploration,threshhold,zero,negone,ucbscore,simplescore"
+
+def UCB_simple_evaluate(repetitions,iteration,discountfactor,startmove,response,bucketcount,radial,exploration,threshhold,zero,negone):
+    learner=learners.BucketUCB(bucketcount,radial=radial,exploration=exploration,startmove=startmove)
+    if response is not None:
+        teacher=teachers.simpleteacher(threshhold,zero,negone,override=[response])
+    else:
+        teacher=teachers.simpleteacher(threshhold,zero,negone)
+    result = ga.evaluate(learner, teacher, repetitions, discountfactor, 1)
+    return ",".join([str(x) for x in [repetitions,iteration,discountfactor,startmove,response,bucketcount,radial,exploration,threshhold,zero,negone,result[0],result[2]]])

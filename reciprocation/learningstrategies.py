@@ -5,6 +5,7 @@ import sklearn.gaussian_process as skgp
 import scipy.optimize as spopt
 import numpy as np
 import matplotlib.pyplot as plt
+import bisect
 
 class fastlearner:
     def __init__(self):
@@ -192,7 +193,7 @@ class GPUCB:
 
 
 class BucketUCB:
-    def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,exploration=4.0):
+    def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,exploration=4.0,startmove=None):
         self.bucketcount=bucketcount
         self.nvals=[None for i in range(bucketcount)]
         self.totals=[0.0 for i in range(bucketcount)]
@@ -204,6 +205,7 @@ class BucketUCB:
         self.exploration=exploration
         self.splitval=splitval
         self.minbucketsize=minbucketsize
+        self.startmove=startmove
 
     def reset(self):
         self.nvals = [None for i in range(self.bucketcount)]
@@ -211,7 +213,7 @@ class BucketUCB:
         self.lastmove = None
 
     def clone(self):
-        result=BucketUCB(self.bucketcount,self.splitthreshhold,self.maxbuckets,self.radial)
+        result=BucketUCB(self.bucketcount,self.splitthreshhold,self.maxbuckets,self.radial,self.exploration,self.startmove)
         result.nvals=[x for x in self.nvals]
         result.totals=[x for x in self.totals]
         result.lowerbounds=self.lowerbounds
@@ -233,6 +235,9 @@ class BucketUCB:
     def respond(self,opponentmove):
         if self.lastmove is not None:
             self.update(self.lastmove,opponentmove)
+        if self.lastmove is None and self.startmove is not None:
+            self.lastmove=bisect.bisect(self.lowerbounds,self.startmove)-1
+            return self.startmove
         self.lastmove=self.pickmove()
         if self.radial:
             return math.sin(math.pi*(self.lowerbounds[self.lastmove]+random.random()*((self.lowerbounds+[1.0])[self.lastmove+1]-self.lowerbounds[self.lastmove]))/2.0)

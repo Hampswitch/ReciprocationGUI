@@ -144,6 +144,10 @@ if __name__=="firstmove__main__":
     FirstMoveVisualizer(master, data).pack(side=tk.TOP)
     tk.mainloop()
 
+if __name__=="__main__quickmesh":
+    data=pandas.read_csv("results/uctsimple.csv")
+
+
 if __name__=="__main__":
     data=pandas.read_csv("results/knnsimple.csv")
     master=tk.Tk()
