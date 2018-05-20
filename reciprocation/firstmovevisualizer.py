@@ -63,35 +63,43 @@ def mkfirstmovemesh(data, threshhold, zero, negone):
     ax.set_title('Teacher: ('+str(threshhold)+", "+str(zero)+", "+str(negone))
     fig.show()
 
+def cleantable(data):
+    for column in data.columns:
+        if column.find("score")>0:
+            data[column]=data[column].astype(float)
+        else:
+            data[column]=data[column].astype(str)
+    data=data[(data["startmove"].astype(str)!='None')&(data["response"].astype(str)!='None')]
+    return data
+
 class FirstMoveVisualizer(tk.Frame):
-    def __init__(self,master,data):
+    def __init__(self,master,data,defaults={},score="ucbscore"):
         tk.Frame.__init__(self,master)
-        self.data=data
-        tframe=tk.Frame(self)
-        tframe.pack(side=tk.LEFT)
-        zframe=tk.Frame(self)
-        zframe.pack(side=tk.LEFT)
-        nframe=tk.Frame(self)
-        nframe.pack(side=tk.LEFT)
-        tk.Label(tframe,text="Threshhold").pack(side=tk.TOP)
-        tk.Label(zframe,text="Zero Response").pack(side=tk.TOP)
-        tk.Label(nframe,text="Negative One Response").pack(side=tk.TOP)
-        self.tvals=self.data["threshhold"].unique()
-        self.zvals=self.data["zero"].unique()
-        self.nvals=self.data["negone"].unique()
-        self.threshhold=tk.DoubleVar(master)
-        self.threshhold.set(self.tvals[0])
-        self.zero=tk.DoubleVar(master)
-        self.zero.set(self.zvals[0])
-        self.negone=tk.DoubleVar(master)
-        self.negone.set(self.nvals[0])
-        tk.OptionMenu(tframe, self.threshhold, *self.tvals).pack(side=tk.TOP)
-        tk.OptionMenu(zframe, self.zero, *self.zvals).pack(side=tk.TOP)
-        tk.OptionMenu(nframe, self.negone, *self.nvals).pack(side=tk.TOP)
+        self.score=score
+        self.columnvars={}
+        self.columnvalues={}
+        self.stringvalues={}
+        self.data=cleantable(data)
+        for column in self.data.columns:
+            if column.find("score")<0 and column not in ["startmove","response","iteration"]:
+                values=list(data[column].unique())
+                if len(values)>1:
+                    f = tk.Frame(self)
+                    f.pack(side=tk.TOP, fill=tk.X)
+                    tk.Label(f, text=column).pack(side=tk.LEFT, fill=tk.X)
+                    self.columnvars[column] = tk.StringVar()
+                    self.columnvalues[column] = values
+                    self.stringvalues[column] = [str(x) for x in self.columnvalues[column]]
+                    tk.OptionMenu(f, self.columnvars[column], *(self.stringvalues[column])).pack(side=tk.RIGHT)
         tk.Button(self,text="Make Mesh",command=self.mkmesh).pack(side=tk.LEFT)
 
     def mkmesh(self):
-        mkfirstmovemesh(self.data, self.threshhold.get(), self.zero.get(), self.negone.get())
+        fixedvalues={}
+        for col,var in self.columnvars.items():
+            val=var.get()
+            fixedvalues[col]=val
+        mesh=getmesh(data,fixedvalues,"startmove","response",self.score,xdiscard=["None"],ydiscard=["None"])
+        mkmesh(mesh,"startmove","response","score")
 
 class knnsimplevisualizer(tk.Frame):
     def __init__(self,master,data):
@@ -138,8 +146,8 @@ class knnsimplevisualizer(tk.Frame):
         data=getmesh(self.data,setdict,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
         mkmesh(data,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
 
-if __name__=="firstmove__main__":
-    data=pandas.read_csv("firstmoveUCTdata.csv")
+if __name__=="__main__":
+    data=pandas.read_csv("results/ucb_simple_mesh.csv")
     master = tk.Tk()
     FirstMoveVisualizer(master, data).pack(side=tk.TOP)
     tk.mainloop()
@@ -148,7 +156,7 @@ if __name__=="__main__quickmesh":
     data=pandas.read_csv("results/uctsimple.csv")
 
 
-if __name__=="__main__":
+if __name__=="__main__knn":
     data=pandas.read_csv("results/knnsimple.csv")
     master=tk.Tk()
     knnsimplevisualizer(master,data).pack(side=tk.TOP)

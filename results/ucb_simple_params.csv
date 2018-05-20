@@ -1,3 +1,4 @@
+repetitions,iteration,discountfactor,startmove,response,bucketcount,radial,exploration,threshhold,zero,negone,ucbscore,simplescore
 10000,0,0.999,None,None,4,0,0.0625,0.988,-0.692,0.0,0.3018520002053341,1.2209352982856987
 10000,1,0.999,None,None,4,0,0.0625,0.988,-0.692,0.0,0.30267548660991883,1.2566431247920904
 10000,2,0.999,None,None,4,0,0.0625,0.988,-0.692,0.0,0.30372342940242747,1.2368267912261044

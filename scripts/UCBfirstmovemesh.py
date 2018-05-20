@@ -9,6 +9,6 @@ def processUCB(params):
 
 if __name__=="__main__":
     pool=multiprocessing.Pool(processes=20)
-    result=pool.map(processUCB,itertools.product([-x for x in util.rvals[-1:0:-1]]+util.rvals,[-x for x in util.rvals[-1:0:-1]]+util.rvals,range(10),util.opplist))
+    result=pool.map(processUCB,itertools.product([-x for x in util.rvals[-1:0:-1]]+util.rvals,[-x for x in util.rvals[-1:0:-1]]+util.rvals,range(10,500),util.opplist))
     for r in result:
         print r
