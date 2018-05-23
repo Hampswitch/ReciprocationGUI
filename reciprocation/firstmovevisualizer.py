@@ -147,9 +147,9 @@ class knnsimplevisualizer(tk.Frame):
         mkmesh(data,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
 
 if __name__=="__main__":
-    data=pandas.read_csv("results/ucb_simple_mesh.csv")
+    data=pandas.read_csv("results/uctsimple.csv")
     master = tk.Tk()
-    FirstMoveVisualizer(master, data).pack(side=tk.TOP)
+    FirstMoveVisualizer(master, data,score="uctscore").pack(side=tk.TOP)
     tk.mainloop()
 
 if __name__=="__main__quickmesh":

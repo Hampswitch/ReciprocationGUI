@@ -9,4 +9,6 @@ def processGPUCB(params):
 
 if __name__=="__main__":
     pool=multiprocessing.Pool(processes=20)
-    pool.map(processGPUCB,itertools.product([-x for x in util.rvals[-1:0:-1]]+util.rvals,[-x for x in util.rvals[-1:0:-1]]+util.rvals))
+    result=pool.map(processGPUCB,itertools.product([-x for x in util.rvals[-1:0:-1]]+util.rvals,[-x for x in util.rvals[-1:0:-1]]+util.rvals))
+    for r in result:
+        print r
