@@ -149,7 +149,7 @@ class knnsimplevisualizer(tk.Frame):
 if __name__=="__main__":
     data=pandas.read_csv("results/uctsimple.csv")
     master = tk.Tk()
-    FirstMoveVisualizer(master, data,score="uctscore").pack(side=tk.TOP)
+    FirstMoveVisualizer(master, data,score="simplescore").pack(side=tk.TOP)
     tk.mainloop()
 
 if __name__=="__main__quickmesh":
