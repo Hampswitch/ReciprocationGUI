@@ -22,10 +22,13 @@ class meshTLteacher:
         if filename is not None:
             self.evalfunc=mkmeshfunc(filename,score_col,fixedvalues)
         else:
-            self.evalfunc=lambda olm,pm:meshutils.meshlookup(mesh,olm,pm)
+            self.mesh=mesh
 
     def evalmove(self,move):
-        return self.evalfunc(self.opplastmove,move)
+        if self.evalfunc is not None:
+            return self.evalfunc(self.opplastmove,move)
+        else:
+            return meshutils.meshlookup(self.mesh,self.opplastmove,move)
 
     def observeopponent(self,oppmove):
         self.opplastmove=oppmove
