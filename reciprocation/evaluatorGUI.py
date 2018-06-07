@@ -7,9 +7,12 @@ import time
 import Tkinter as tk
 import ScrolledText
 import genetic_alg as ga
+import reciprocation.UCB as ucb
 import teachingstrategies as ts
 import learningstrategies as ls
+import teachinglearning as tl
 import KNNUCB as knn
+
 
 class ParameterPanel(tk.Frame):
     def __init__(self,master,parameters):
@@ -88,8 +91,36 @@ class UCBSelector(tk.Frame):
 
     def getPlayer(self):
         paramvals=self.params.getparameters()
-        return ls.BucketUCB(paramvals[0],radial=paramvals[2],exploration=paramvals[1],splitthreshhold=neg2none(paramvals[5]),
-                            splitval=neg2none(paramvals[6]),minbucketsize=paramvals[3],maxbuckets=neg2none(paramvals[4]))
+        return ucb.BucketUCB(paramvals[0], radial=paramvals[2], exploration=paramvals[1], splitthreshhold=neg2none(paramvals[5]),
+                                           splitval=neg2none(paramvals[6]), minbucketsize=paramvals[3], maxbuckets=neg2none(paramvals[4]))
+
+class UCBTLSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self, master)
+        tk.Label(self,text="Upper Confidence Bounds").pack(side=tk.TOP)
+        #bucketcount,splitthreshhold=None,splitval=None,minbucketsize=None,maxbuckets=None,radial=True,exploration=4.0)
+        self.params=ParameterPanel(self,[("Bucket Count: ",tk.IntVar,8),
+                                         ("Exploration: ",tk.DoubleVar,1),
+                                         ("Radial: ",tk.BooleanVar,False),
+                                         ("Teacher",tk.IntVar,0)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "UCB: "+str(self.params.getparameters())
+
+    def getPlayer(self):
+        paramvals=self.params.getparameters()
+        if paramvals[3]==0:
+            teacher=ucb.NonTeacher()
+        elif paramvals[3]==1:
+            teacher=tl.meshTLteacher("results/uctsimple2h.csv","simplescore",fixedvalues={"threshhold":.707,"zero":0,"negone":0,"c":.125,"bucketcount":2})
+        elif paramvals[3]==2:
+            teacher=tl.meshTLteacher("results/gpucbsimple.csv","simplescore",fixedvalues={})
+        elif paramvals[3]==3:
+            teacher = tl.meshTLteacher("results/ucb_simple_mesh.csv", "simplescore",
+                                       fixedvalues={"threshhold": .707, "zero": 0, "negone": 0 })
+        return ucb.BucketUCB(paramvals[0], radial=paramvals[2], exploration=paramvals[1], splitthreshhold=None,
+                                           splitval=None, minbucketsize=0, maxbuckets=None,teacher=teacher)
 
 class FastLearnerSelector(tk.Frame):
     def __init__(self,master):
@@ -157,6 +188,7 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel, text="Fast Learner",command=self.setFastLearner).pack(side=tk.TOP)
         tk.Button(buttonpanel,text="GPUCB",command=self.setGPUCB).pack(side=tk.TOP)
         tk.Button(buttonpanel,text="KNN",command=self.setKNN).pack(side=tk.TOP)
+        tk.Button(buttonpanel,text="UCBTL",command=self.setUCBTL).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None
@@ -180,6 +212,12 @@ class PlayerSelector(tk.Frame):
         if self.selector is not None:
             self.selector.pack_forget()
         self.selector=UCTSelector(self.selectorpanel)
+        self.selector.pack(side=tk.TOP)
+
+    def setUCBTL(self):
+        if self.selector is not None:
+            self.selector.pack_forget()
+        self.selector=UCBTLSelector(self.selectorpanel)
         self.selector.pack(side=tk.TOP)
 
     def setUCB(self):

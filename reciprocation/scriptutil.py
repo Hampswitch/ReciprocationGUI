@@ -1,5 +1,6 @@
 
 import KNNUCB as knn
+import reciprocation.UCB
 import teachingstrategies as teachers
 import learningstrategies as learners
 import genetic_alg as ga
@@ -69,7 +70,7 @@ def GPUCB_simple_evaluate(repetitions,iteration,discountfactor,startmove,respons
 ucb_simple_header="repetitions,iteration,discountfactor,startmove,response,bucketcount,radial,exploration,threshhold,zero,negone,ucbscore,simplescore"
 
 def UCB_simple_evaluate(repetitions,iteration,discountfactor,startmove,response,bucketcount,radial,exploration,threshhold,zero,negone):
-    learner=learners.BucketUCB(bucketcount,radial=radial,exploration=exploration,startmove=startmove)
+    learner= reciprocation.UCB.BucketUCB(bucketcount, radial=radial, exploration=exploration, startmove=startmove)
     if response is not None:
         teacher=teachers.simpleteacher(threshhold,zero,negone,override=[response])
     else:

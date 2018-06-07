@@ -1,59 +1,23 @@
-import pandas
-import matplotlib.pyplot as plot
-import numpy as np
-import teachingstrategies as teachers
-import mpl_toolkits.mplot3d as mplot3d
 import Tkinter as tk
 
-def getmesh(data,fixedvalues,xcolumn,ycolumn,value,xdiscard=["None"],ydiscard=["None"]):
-    for k,v in fixedvalues.items():
-        data=data[data[k]==v]
-    data=data[~data[xcolumn].isin(xdiscard)]
-    data=data[~data[ycolumn].isin(ydiscard)]
-    data[xcolumn]=data[xcolumn].astype(float)
-    data[ycolumn]=data[ycolumn].astype(float)
-    result=data.groupby(by=[xcolumn,ycolumn]).mean().reset_index().pivot(index=xcolumn,columns=ycolumn,values=value)
-    # remove NAN columns, change NAN to min
-    result=result.fillna(result.min().min())
-    result.index=[float(x) for x in result.index]
-    result.columns=[float(x) for x in result.columns]
-    result=result.reindex(index=sorted(result.index),columns=sorted(result.columns))
-    return result
+import matplotlib.pyplot as plot
+from mpl_toolkits import mplot3d
+import numpy as np
+import pandas
+
+import teachingstrategies as teachers
+from reciprocation.meshutils import getmesh, plotmesh, meshlookup
+
 
 def getfirstmovemesh(data, threshhold, zero, negone):
     return data[(data["threshhold"]==threshhold) & (data["zero"]==zero) & (data["negone"]==negone)].pivot(index='startmove',columns='response',values='teacher')
 
-def estimateval(data,x,y):
-    xindex=len(data.index[data.index<x])-1
-    if xindex<0:
-        xindex=0
-    elif xindex<len(data.index)-1 and abs(data.index[xindex+1]-x)<abs(data.index[xindex]-x):
-        xindex=xindex+1
-    yindex=len(data.columns[data.columns<y])-1
-    if yindex<0:
-        yindex=0
-    elif yindex<len(data.columns)-1 and abs(data.columns[yindex+1]-y)<abs(data.columns[yindex]-y):
-        yindex=yindex+1
-    xval=data.index[xindex]
-    yval=data.columns[yindex]
-    return data[xval][yval]
-
-def mkmesh(data,xlabel,ylabel,title):
-    fig=plot.figure()
-    ax=plot.axes(projection='3d')
-    xsize=len(data.index)
-    ysize=len(data.columns)
-    ax.plot_wireframe(np.ones((xsize,ysize))*data.index.values.reshape(-1,1),(np.ones((ysize,xsize))*data.columns.values.reshape(-1,1)).transpose(),data.values)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.set_title(title)
-    fig.show()
 
 def mkfirstmovemesh(data, threshhold, zero, negone):
     data=getfirstmovemesh(data, threshhold, zero, negone)
     teacher=teachers.simpleteacher(threshhold,zero,negone)
     responses=[teacher.respond(x) for x in data.index]
-    zvals=[estimateval(data,x,y) for x,y in zip(data.index,responses)]
+    zvals=[meshlookup(data, x, y) for x, y in zip(data.index, responses)]
     fig = plot.figure()
     ax = plot.axes(projection='3d')
     ax.plot_wireframe(np.ones((21, 21)) * data.index.values, (np.ones((21, 21)) * data.index.values).transpose(), data.values)
@@ -73,13 +37,14 @@ def cleantable(data):
     return data
 
 class FirstMoveVisualizer(tk.Frame):
-    def __init__(self,master,data,defaults={},score="ucbscore"):
+    def __init__(self,master,data,defaults={},title="Title",score="simplescore"):
         tk.Frame.__init__(self,master)
         self.score=score
         self.columnvars={}
         self.columnvalues={}
         self.stringvalues={}
         self.data=cleantable(data)
+        tk.Label(self,text=title).pack(side=tk.TOP)
         for column in self.data.columns:
             if column.find("score")<0 and column not in ["startmove","response","iteration"]:
                 values=list(data[column].unique())
@@ -98,8 +63,8 @@ class FirstMoveVisualizer(tk.Frame):
         for col,var in self.columnvars.items():
             val=var.get()
             fixedvalues[col]=val
-        mesh=getmesh(data,fixedvalues,"startmove","response",self.score,xdiscard=["None"],ydiscard=["None"])
-        mkmesh(mesh,"startmove","response","score")
+        mesh= getmesh(data, fixedvalues, "startmove", "response", self.score, xdiscard=["None"], ydiscard=["None"])
+        plotmesh(mesh, "startmove", "response", "score")
 
 class knnsimplevisualizer(tk.Frame):
     def __init__(self,master,data):
@@ -143,13 +108,13 @@ class knnsimplevisualizer(tk.Frame):
                 v=var.get()
                 if v in self.stringvalues[column]:
                     setdict[column]=self.columnvalues[column][self.stringvalues[column].index(v)]
-        data=getmesh(self.data,setdict,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
-        mkmesh(data,self.xaxis.get(),self.yaxis.get(),self.zaxis.get())
+        data= getmesh(self.data, setdict, self.xaxis.get(), self.yaxis.get(), self.zaxis.get())
+        plotmesh(data, self.xaxis.get(), self.yaxis.get(), self.zaxis.get())
 
 if __name__=="__main__":
-    data=pandas.read_csv("results/uctsimple.csv")
+    data=pandas.read_csv("results/ucb_simple_mesh.csv")
     master = tk.Tk()
-    FirstMoveVisualizer(master, data,score="simplescore").pack(side=tk.TOP)
+    FirstMoveVisualizer(master, data,score="simplescore",title="UCB").pack(side=tk.TOP)
     tk.mainloop()
 
 if __name__=="__main__quickmesh":

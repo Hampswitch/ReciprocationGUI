@@ -69,6 +69,10 @@ class simpleteacher:
         self.irrationalopponent=False
         self.noise=None
 
+    def setstartmove(self,move):
+        self.initoverride=[move]
+        self.override=[move]
+
     def __str__(self):
         return "Simple Teacher: "+str((self.threshhold,self.zeroresponse,self.negoneresponse))
 

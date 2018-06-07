@@ -4,7 +4,7 @@ import numpy as np
 import sortedcontainers
 import itertools
 import pandas
-import firstmovevisualizer as fmv
+
 
 def findposweights(v,L):
     pos=len(L[L<v])
@@ -111,6 +111,7 @@ class KNNUCBplayer:
         return maxmove
 
 if __name__=="__main__":
+    import reciprocation.meshutils
     data = pandas.read_csv("results/knnsimple.csv")
     d={"K":2,"nwidth":.2,"explore":1.0,"threshhold":data["threshhold"].unique()[4],"zero":0,"negone":0}
-    mesh=fmv.getmesh(data,d,"startmove","response","simplescore")
+    mesh= reciprocation.meshutils.getmesh(data, d, "startmove", "response", "simplescore")
