@@ -23,6 +23,7 @@ class meshTLteacher:
             self.evalfunc=mkmeshfunc(filename,score_col,fixedvalues)
         else:
             self.mesh=mesh
+            self.evalfunc=None
 
     def evalmove(self,move):
         if self.evalfunc is not None:
