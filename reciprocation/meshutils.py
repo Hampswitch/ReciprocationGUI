@@ -113,11 +113,12 @@ def meshlookup(data, x, y):
     return data[ymin][xmin]*yminfactor*xminfactor+data[ymin][xmax]*yminfactor*xmaxfactor+data[ymax][xmin]*ymaxfactor*xminfactor+data[ymax][xmax]*ymaxfactor*xmaxfactor
 
 if __name__=="__main__":
-    import learningstrategies as ls
-    import teachingstrategies as ts
-    import reciprocation.UCB as ucb
-    teacher=ts.simpleteacher(.707,0,0)
-    learner=ucb.BucketUCB(bucketcount=8,exploration=1.0)
-    mesh=createmesh(teacher,learner,None,1000,.99,10,poolsize=3)
-    print mesh
-    plotmesh(mesh)
+    #import learningstrategies as ls
+    #import teachingstrategies as ts
+    #import reciprocation.UCB as ucb
+    #teacher=ts.simpleteacher(.707,0,0)
+    #learner=ucb.BucketUCB(bucketcount=8,exploration=1.0)
+    #mesh=createmesh(teacher,learner,None,1000,.99,10,poolsize=3)
+    #print mesh
+    #plotmesh(mesh)
+    displayiterations("results/meshiteration1.csv")

@@ -4,6 +4,16 @@ import reciprocation.teachinglearning as tl
 import reciprocation.meshutils as meshutils
 import reciprocation.UCB as ucb
 
+"""
+Parameter ideas for UCBTL script
+  Initial strategy (variants on simpleteacher)
+  discountfactor/iterations
+  repetitions when creating mesh
+  multiplicative factor for mesh
+  opponent/learner
+  TLUCB parameters bucketcount/exploration
+"""
+
 def outputmesh(iteration,mesh):
     for c in mesh.columns:
         for i in mesh.index:

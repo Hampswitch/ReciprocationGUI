@@ -1,0 +1,16 @@
+1)
+  initial strat (.707,0,0)
+  opponent UCB (8 buckets, 1.0 exploration factor)
+  iteration count: 10
+  multiplicative factor: 100
+  evaluation: 1000, .99 discount factor
+  TL parameters 8 buckets, 1.0 exploration factor
+
+strat
+    initial strats (.588,0,0),(.951,-.31,0), (.707, -1, -1), (.588,-1,-1), (.951,-1,-1)
+iterationcount
+    100,20
+opponent
+    UCT
+self
+    expfactor .125
