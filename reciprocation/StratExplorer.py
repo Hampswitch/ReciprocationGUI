@@ -2,6 +2,8 @@ import Tkinter as tk
 import math
 import bisect
 import teachingstrategies
+import teachinglearning
+import tkdict
 
 def toCanvas(x,y,size=200,scale=2):
     return (size*.5+5+x*size*.25,size*.5+5-y*size*.25)
@@ -15,7 +17,7 @@ def checkbounds(p):
     return (x,y)
 
 class functioncontrol(tk.Frame):
-    def __init__(self,master,pointlist=None,command=None,simpleteachercontrol=False):
+    def __init__(self,master,pointlist=None,command=None,simpleteachercontrol=False,meshcontrol=False):
         tk.Frame.__init__(self,master)
         self.displaycanvas=tk.Canvas(self, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
         self.displaycanvas.pack(side=tk.TOP)
@@ -54,6 +56,21 @@ class functioncontrol(tk.Frame):
             tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
             tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
             tk.Button(self,text="Set Strategy",command=self.setpointlist).pack(side=tk.TOP)
+        if meshcontrol:
+            self.resolutionvar=tk.IntVar()
+            self.resolutionvar.set(10)
+            self.filenamevar=tk.StringVar()
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Filename:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.filenamevar).pack(side=tk.LEFT)
+            self.fixedvars=tkdict.tkdict(self)
+            self.fixedvars.pack(side=tk.TOP)
+            tk.Button(self,text="Set Strategy",command=self.setmesh).pack(side=tk.TOP)
         self.pointlist=pointlist
         if self.pointlist is None:
             self.pointlist=[]
@@ -71,6 +88,15 @@ class functioncontrol(tk.Frame):
         resolution=self.resolutionvar.get()
         x=(resolution-1)/2.0
         self.pointlist=[(2*(i-x)/x,2*strat.respond((i-x)/x)) for i in range(resolution)]
+        self.__drawpointlist(self.pointlist)
+
+    def setmesh(self):
+        resolution=self.resolutionvar.get()
+        x = (resolution - 1) / 2.0
+        filename=self.filenamevar.get()
+        meshfunc=teachinglearning.mkmeshfunc(filename,fixedvalues=self.fixedvars.get())
+        grid=[(i-x)/x for i in range(resolution)]
+        self.pointlist = [(2 * (i - x) / x, 2 * max([(meshfunc((i-x)/x,g),g) for g in grid])[1]) for i in range(resolution)]
         self.__drawpointlist(self.pointlist)
 
     def getValue(self, x):
@@ -151,7 +177,7 @@ class giftDisplay(tk.Frame):
         frame.pack(side=tk.TOP)
         tk.Label(self,text="Response Function").pack(side=tk.TOP)
         self.strat=teachingstrategies.simpleteacher(.95,-1,-1)
-        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],simpleteachercontrol=True)
+        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],simpleteachercontrol=False,meshcontrol=True)
         self.stratcontrol.pack(side=tk.LEFT)
         self.funccanvas = tk.Canvas(frame, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
         self.funccanvas.pack(side=tk.LEFT)
