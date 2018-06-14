@@ -121,4 +121,4 @@ if __name__=="__main__":
     #mesh=createmesh(teacher,learner,None,1000,.99,10,poolsize=3)
     #print mesh
     #plotmesh(mesh)
-    displayiterations("results/meshiteration1.csv")
+    displayiterations("results/meshiterationp7.csv")

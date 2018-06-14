@@ -60,6 +60,9 @@ class functioncontrol(tk.Frame):
             self.resolutionvar=tk.IntVar()
             self.resolutionvar.set(10)
             self.filenamevar=tk.StringVar()
+            self.filenamevar.set("results/meshiterationp0.csv")
+            self.scorevar=tk.StringVar()
+            self.scorevar.set("score")
             frame = tk.Frame(self)
             frame.pack(side=tk.TOP)
             tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
@@ -68,6 +71,10 @@ class functioncontrol(tk.Frame):
             frame.pack(side=tk.TOP)
             tk.Label(frame, text="Filename:").pack(side=tk.LEFT)
             tk.Entry(frame, textvariable=self.filenamevar).pack(side=tk.LEFT)
+            frame = tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Score:").pack(side=tk.LEFT)
+            tk.Entry(frame, textvariable=self.scorevar).pack(side=tk.LEFT)
             self.fixedvars=tkdict.tkdict(self)
             self.fixedvars.pack(side=tk.TOP)
             tk.Button(self,text="Set Strategy",command=self.setmesh).pack(side=tk.TOP)
@@ -94,7 +101,7 @@ class functioncontrol(tk.Frame):
         resolution=self.resolutionvar.get()
         x = (resolution - 1) / 2.0
         filename=self.filenamevar.get()
-        meshfunc=teachinglearning.mkmeshfunc(filename,fixedvalues=self.fixedvars.get())
+        meshfunc=teachinglearning.mkmeshfunc(filename,score_col=self.scorevar.get(),fixedvalues=self.fixedvars.get())
         grid=[(i-x)/x for i in range(resolution)]
         self.pointlist = [(2 * (i - x) / x, 2 * max([(meshfunc((i-x)/x,g),g) for g in grid])[1]) for i in range(resolution)]
         self.__drawpointlist(self.pointlist)
