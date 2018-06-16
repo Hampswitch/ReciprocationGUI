@@ -14,8 +14,12 @@ class NonTeacher:
     def observeself(self,move):
         pass
 
+    def reset(self):
+        pass
+
 class BucketUCB:
-    def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,exploration=4.0,startmove=None,teacher=NonTeacher()):
+    def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,
+                 exploration=4.0,startmove=None,teacher=NonTeacher()):
         self.bucketcount=bucketcount
         self.nvals=[None for i in range(bucketcount)]
         self.totals=[0.0 for i in range(bucketcount)]
@@ -36,7 +40,9 @@ class BucketUCB:
     def reset(self):
         self.nvals = [None for i in range(self.bucketcount)]
         self.totals = [0.0 for i in range(self.bucketcount)]
+        self.lowerbounds = [i * 2.0 / self.bucketcount - 1 for i in range(self.bucketcount)]
         self.lastmove = None
+        self.teacher.reset()
 
     def clone(self):
         result=BucketUCB(self.bucketcount,self.splitthreshhold,self.maxbuckets,self.radial,self.exploration,self.startmove)
@@ -83,7 +89,7 @@ class BucketUCB:
             self.totals[bucket] = self.totals[bucket] + response
             if self.splitthreshhold is not None and self.nvals[bucket]>=self.splitthreshhold and \
                     (self.maxbuckets is None or len(self.nvals)<= self.maxbuckets) and \
-                                    (self.lowerbounds+[1.0])[bucket]-self.lowerbounds[bucket]>self.minbucketsize:
+                                    (self.lowerbounds+[1.0])[bucket+1]-self.lowerbounds[bucket]>self.minbucketsize:
                 if self.splitval is None:
                     newnvals=None
                     newtotals=0.0
@@ -101,12 +107,12 @@ class BucketUCB:
             n=sum(self.nvals)
             if not self.radial:
                 self.status=[(self.totals[i]/self.nvals[i]+
-                                math.sqrt(self.exploration*math.log(n)/self.nvals[i])+
+                                math.sqrt(self.exploration*math.log(n)/self.nvals[i])*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i])+
                                 getavgpayoff(self.lowerbounds[i],(self.lowerbounds+[1.0])[i+1])+
-                              (self.teacher.evalmove(self.lowerbounds[i])+self.teacher.evalmove((self.lowerbounds+[1.0])[i+1]))/2,i) for i in range(self.bucketcount)]
+                              (self.teacher.evalmove(self.lowerbounds[i])+self.teacher.evalmove((self.lowerbounds+[1.0])[i+1]))/2,i) for i in range(len(self.nvals))]
             else:
                 self.status=[(self.totals[i] / self.nvals[i] +
                                       math.sqrt(self.exploration * math.log(n) / self.nvals[i]) +
                                       getavgpayoff(math.sin(math.pi*self.lowerbounds[i]/2.0), math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)) +
-                              (self.teacher.evalmove(math.sin(math.pi*self.lowerbounds[i]/2.0))+self.teacher.evalmove(math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)))/2, i) for i in range(self.bucketcount)]
+                              (self.teacher.evalmove(math.sin(math.pi*self.lowerbounds[i]/2.0))+self.teacher.evalmove(math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)))/2, i) for i in range(len(self.nvals))]
         return max(self.status)[1]

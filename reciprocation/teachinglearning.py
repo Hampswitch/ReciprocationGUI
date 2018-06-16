@@ -37,5 +37,8 @@ class meshTLteacher:
     def observeself(self,move):
         pass
 
+    def reset(self):
+        pass
+
 if __name__=="__main__":
     foo=mkmeshfunc("results/uctsimple2h.csv",fixedvalues={"threshhold":.707,"zero":0,"negone":0,"c":.125,"bucketcount":2})
