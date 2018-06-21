@@ -103,7 +103,7 @@ def outputmesh(params,mesh):
 
 if __name__=="__main__":
     print "params,startmove,response,score"
-    paramlist=[int(x) for x in sys.argv[1].split(",")]
+    paramlist=[int(x) for x in sys.argv[1].split(":")]
     for paramset in paramlist:
         threshhold,zeroresponse,negoneresponse,bucketcount,splitthreshhold,splitval,minbucketsize,radial,exploration,\
         gamelength,discountfactor,iterations,priorthreshhold,priorzero,priornegone,priorwt=params[paramset]
