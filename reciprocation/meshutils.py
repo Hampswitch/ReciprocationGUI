@@ -121,4 +121,22 @@ if __name__=="__main__":
     #mesh=createmesh(teacher,learner,None,1000,.99,10,poolsize=3)
     #print mesh
     #plotmesh(mesh)
-    displayiterations("results/meshiterationp7.csv")
+
+    #displayiterations("results/meshiteration19.csv")
+    datalist=[]
+    for fn in ["results/meshiterationp0.csv", "results/meshiterationp1.csv", "results/meshiterationp2.csv",
+               "results/meshiterationp3.csv", "results/meshiterationp4.csv", "results/meshiterationp5.csv"]:
+        data=pandas.read_csv(fn)
+        datalist.append(data)
+    data=pandas.concat(datalist)
+    mesh=getmesh(data,{"iteration":9},"startmove","response","score")
+    plotmesh(mesh,title="nosplit")
+
+    datalist=[]
+    for fn in ["results/meshiteration16.csv", "results/meshiteration20.csv", "results/meshiteration21.csv",
+               "results/meshiteration22.csv", "results/meshiteration23.csv", "results/meshiteration24.csv"]:
+        data = pandas.read_csv(fn)
+        datalist.append(data)
+    data = pandas.concat(datalist)
+    mesh = getmesh(data, {"iteration": 9}, "startmove", "response", "score")
+    plotmesh(mesh,title="split")

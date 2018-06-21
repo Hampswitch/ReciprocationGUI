@@ -17,13 +17,33 @@ class NonTeacher:
     def reset(self):
         pass
 
+def getprior(teacher, buckets, radial, aggcount=10,obscount=1):
+    nvals=[obscount for i in range(buckets)]
+    totals=[0.0 for i in range(buckets)]
+    lowerbounds=[i*2.0/buckets-1 for i in range(buckets)]
+    for i in range(buckets):
+        for o in range(aggcount):
+            if radial:
+                move=math.sin(math.pi*(lowerbounds[i]+random.random()*((lowerbounds+[1.0])[i+1]-lowerbounds[i]))/2.0)
+            else:
+                move=lowerbounds[i]+random.random()*((lowerbounds+[1.0])[i+1]-lowerbounds[i])
+            response=teacher.respond(move)
+            totals[i]=totals[i]+ obscount*response / aggcount
+    return (nvals,totals,lowerbounds)
+
 class BucketUCB:
     def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,
-                 exploration=4.0,startmove=None,teacher=NonTeacher()):
+                 exploration=4.0,startmove=None,teacher=NonTeacher(),prior=None):
+        self.prior=prior
         self.bucketcount=bucketcount
-        self.nvals=[None for i in range(bucketcount)]
-        self.totals=[0.0 for i in range(bucketcount)]
-        self.lowerbounds=[i*2.0/bucketcount-1 for i in range(bucketcount)]
+        if prior is None:
+            self.nvals=[None for i in range(bucketcount)]
+            self.totals=[0.0 for i in range(bucketcount)]
+            self.lowerbounds=[i*2.0/bucketcount-1 for i in range(bucketcount)]
+        else:
+            self.nvals=prior[0]
+            self.totals=prior[1]
+            self.lowerbounds=prior[2]
         self.lastmove=None
         self.splitthreshhold=splitthreshhold
         self.maxbuckets=maxbuckets
