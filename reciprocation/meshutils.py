@@ -4,6 +4,7 @@ import multiprocessing
 import itertools
 from matplotlib import pyplot as plot
 from mpl_toolkits import mplot3d
+import math
 
 import reciprocation.scriptutil as scriptutil
 import reciprocation.genetic_alg as ga
@@ -68,6 +69,17 @@ def getmesh(data, fixedvalues, xcolumn, ycolumn, value, xdiscard=["None"], ydisc
     result=result.reindex(index=sorted(result.index),columns=sorted(result.columns))
     return result
 
+def correctmesh(mesh,scale=.01):
+    """
+    This function corrects a firstmove effect mesh to remove the immediate effect of the response on the payoff.
+    scale determines the discountfactor
+    :param mesh:
+    :return:
+    """
+    result=pandas.DataFrame(index=mesh.index)
+    for c in mesh.columns:
+        result[c]=mesh[c]-scale*math.sqrt(1-c*c)
+    return result
 
 def plotmesh(data, xlabel="xlabel", ylabel="ylabel", title="title"):
     fig=plot.figure()

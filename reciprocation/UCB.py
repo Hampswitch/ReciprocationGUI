@@ -31,6 +31,50 @@ def getprior(teacher, buckets, radial, aggcount=10,obscount=1):
             totals[i]=totals[i]+ obscount*response / aggcount
     return (nvals,totals,lowerbounds)
 
+class BucketUCBlearner:
+    def __init__(self,buckets=8,prior=None,splitthreshhold=.25,maxbuckets=None,minbucketsize=.001,splitval=1.0):
+        if prior is None:
+            self.nvals=[0 for i in range(buckets)]
+            self.totals=[0.0 for i in range(buckets)]
+            self.lowerbounds=[i*2.0/buckets-1 for i in range(s)]
+        else:
+            self.nvals=prior[0]
+            self.totals=prior[1]
+            self.lowerbounds=prior[2]
+        self.splitthreshhold=splitthreshhold
+        self.maxbuckets=maxbuckets
+        self.minbucketsize=minbucketsize
+        self.splitval=splitval
+
+    def checksplit(self,bucket):
+        if self.splitthreshhold is None:
+            return False
+        if self.maxbuckets is not None and len(self.nvals)>= self.maxbuckets:
+            return False
+        bucketlength=(self.lowerbounds + [1.0])[bucket + 1] - self.lowerbounds[bucket]
+        if self.minbucketsize is not None and bucketlength/2 < self.minbucketsize:
+            return False
+        return self.nvals[bucket]>=self.splitthreshhold*bucketlength
+
+
+    def observe(self,move,response):
+        bucket=self.getbucketindex(move)
+        self.nvals[bucket] = self.nvals[bucket] + 1
+        self.totals[bucket] = self.totals[bucket] + response
+        if self.checksplit(bucket):
+            if self.splitval is None:
+                newnvals = 0
+                newtotals = 0.0
+            else:
+                newnvals = self.nvals[bucket] / self.splitval
+                newtotals = self.totals[bucket] / self.splitval
+            self.nvals[bucket:bucket + 1] = [newnvals, newnvals]
+            self.totals[bucket:bucket + 1] = [newtotals, newtotals]
+            self.lowerbounds[bucket + 1:bucket + 1] = [(self.lowerbounds[bucket] + (self.lowerbounds + [1.0])[bucket + 1]) / 2.0]
+
+    def getbucketindex(self,move):
+        return bisect.bisect(self.lowerbounds,move)-1
+
 class BucketUCB:
     def __init__(self,bucketcount,splitthreshhold=None,splitval=None,minbucketsize=0.0,maxbuckets=None,radial=True,
                  exploration=4.0,startmove=None,teacher=NonTeacher(),prior=None):
@@ -136,3 +180,6 @@ class BucketUCB:
                                       getavgpayoff(math.sin(math.pi*self.lowerbounds[i]/2.0), math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)) +
                               (self.teacher.evalmove(math.sin(math.pi*self.lowerbounds[i]/2.0))+self.teacher.evalmove(math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)))/2, i) for i in range(len(self.nvals))]
         return max(self.status)[1]
+
+if __name__=="__main__":
+    pass

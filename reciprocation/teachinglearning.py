@@ -11,11 +11,29 @@ import pandas
 import meshutils
 
 #TODO - utility to make fixedvalues work (.707000000000000007 problem)
-def mkmeshfunc(filename,score_col="simplescore",fixedvalues=None):
+def mkmeshfunc(filename,score_col="simplescore",fixedvalues=None,scalecorrect=None):
     data = pandas.read_csv(filename)
     fixedvalues=meshutils.fixdict(data,fixedvalues)
     mesh = meshutils.getmesh(data,fixedvalues,"startmove","response",score_col)
+    if scalecorrect is not None:
+        mesh = meshutils.correctmesh(mesh,scalecorrect)
     return lambda olm,pm:meshutils.meshlookup(mesh,olm,pm)
+
+class bayesianteacher:
+    def __init__(self):
+        pass
+
+    def observeopponent(self,oppmove):
+        pass
+
+    def observeself(self,move):
+        pass
+
+    def reset(self):
+        pass
+
+    def evalmove(self,move):
+        pass
 
 class meshTLteacher:
     def __init__(self,filename=None,score_col="simplescore",fixedvalues={},mesh=None):

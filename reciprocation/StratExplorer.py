@@ -4,6 +4,8 @@ import bisect
 import teachingstrategies
 import teachinglearning
 import tkdict
+import pandas
+import meshutils
 
 def toCanvas(x,y,size=200,scale=2):
     return (size*.5+5+x*size*.25,size*.5+5-y*size*.25)
@@ -63,6 +65,8 @@ class functioncontrol(tk.Frame):
             self.filenamevar.set("results/meshiterationp0.csv")
             self.scorevar=tk.StringVar()
             self.scorevar.set("score")
+            self.scalevar=tk.DoubleVar()
+            self.scalevar.set(.01)
             frame = tk.Frame(self)
             frame.pack(side=tk.TOP)
             tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
@@ -75,6 +79,10 @@ class functioncontrol(tk.Frame):
             frame.pack(side=tk.TOP)
             tk.Label(frame, text="Score:").pack(side=tk.LEFT)
             tk.Entry(frame, textvariable=self.scorevar).pack(side=tk.LEFT)
+            frame=tk.Frame(self)
+            frame.pack(side=tk.TOP)
+            tk.Label(frame, text="Correct:").pack(side=tk.LEFT)
+            tk.Entry(frame,textvariable=self.scalevar).pack(side=tk.LEFT)
             self.fixedvars=tkdict.tkdict(self)
             self.fixedvars.pack(side=tk.TOP)
             tk.Button(self,text="Set Strategy",command=self.setmesh).pack(side=tk.TOP)
@@ -101,7 +109,12 @@ class functioncontrol(tk.Frame):
         resolution=self.resolutionvar.get()
         x = (resolution - 1) / 2.0
         filename=self.filenamevar.get()
-        meshfunc=teachinglearning.mkmeshfunc(filename,score_col=self.scorevar.get(),fixedvalues=self.fixedvars.get())
+        data = pandas.read_csv(filename)
+        fixedvalues = meshutils.fixdict(data, self.fixedvars.get())
+        mesh = meshutils.getmesh(data, fixedvalues, "startmove", "response", self.scorevar.get())
+        mesh=meshutils.correctmesh(mesh,self.scalevar.get())
+        meshutils.plotmesh(mesh,"startmove","response","score")
+        meshfunc=teachinglearning.mkmeshfunc(filename,score_col=self.scorevar.get(),fixedvalues=self.fixedvars.get(),scalecorrect=self.scalevar.get())
         grid=[(i-x)/x for i in range(resolution)]
         self.pointlist = [(2 * (i - x) / x, 2 * max([(meshfunc((i-x)/x,g),g) for g in grid])[1]) for i in range(resolution)]
         self.__drawpointlist(self.pointlist)
