@@ -12,7 +12,7 @@ import teachingstrategies as ts
 import learningstrategies as ls
 import teachinglearning as tl
 import KNNUCB as knn
-
+import EXP3
 
 class ParameterPanel(tk.Frame):
     def __init__(self,master,parameters):
@@ -122,6 +122,20 @@ class UCBTLSelector(tk.Frame):
         return ucb.BucketUCB(paramvals[0], radial=paramvals[2], exploration=paramvals[1], splitthreshhold=None,
                                            splitval=None, minbucketsize=0, maxbuckets=None,teacher=teacher)
 
+class EXP3Selector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="EXP3").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Bucket Count: ",tk.IntVar,8),("Max Prob: ",tk.DoubleVar,.25),("Gamma: ",tk.DoubleVar,.1)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "EXP3: "+str(self.params.getparameters())
+
+    def getPlayer(self):
+        paramvals=self.params.getparameters()
+        return EXP3.BucketEXP3(bucketcount=paramvals[0],maxprob=paramvals[1],gamma=paramvals[2])
+
 class FastLearnerSelector(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self, master)
@@ -177,6 +191,22 @@ class KNNselector(tk.Frame):
         else:
             return knn.KNNUCBplayer(params[0],params[1],params[2],params[3])
 
+class BalancerSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Balancing UCBTL")
+        self.params=ParameterPanel(self,[("Bucket count: ", tk.IntVar, 8),("Split threshhold: ", tk.IntVar, 1),("Min Bucketsize: ", tk.DoubleVar, .001), ("Exploration: ", tk.DoubleVar, 1.0)])
+        self.params.pack(side=tk.TOP)
+        self.teacherfunc=tl.mkmeshfunc("results/meshiteration16.csv",score_col="score",fixedvalues={"iteration":9},scalecorrect=.01)
+
+    def __str__(self):
+        params=self.params.getparameters()
+        return "Balancer()"
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        return tl.BucketUCBTL(bucketcount=8, splitthreshhold=1, minbucketsize=0.001, exploration=1.0, startmove=None, teacherfunc=self.teacherfunc)
+
 class PlayerSelector(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self, master)
@@ -189,12 +219,20 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel,text="GPUCB",command=self.setGPUCB).pack(side=tk.TOP)
         tk.Button(buttonpanel,text="KNN",command=self.setKNN).pack(side=tk.TOP)
         tk.Button(buttonpanel,text="UCBTL",command=self.setUCBTL).pack(side=tk.TOP)
+        tk.Button(buttonpanel,text="EXP3",command=self.setEXP3).pack(side=tk.TOP)
+        tk.Button(buttonpanel,text="Balancer",command=lambda:self.setSelector(BalancerSelector)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None
 
     def __str__(self):
         return str(self.selector)
+
+    def setSelector(self,selector):
+        if self.selector is not None:
+            self.selector.pack_forget()
+        self.selector=selector(self.selectorpanel)
+        self.selector.pack(side=tk.TOP)
 
     def setFastLearner(self):
         if self.selector is not None:
@@ -218,6 +256,12 @@ class PlayerSelector(tk.Frame):
         if self.selector is not None:
             self.selector.pack_forget()
         self.selector=UCBTLSelector(self.selectorpanel)
+        self.selector.pack(side=tk.TOP)
+
+    def setEXP3(self):
+        if self.selector is not None:
+            self.selector.pack_forget()
+        self.selector=EXP3Selector(self.selectorpanel)
         self.selector.pack(side=tk.TOP)
 
     def setUCB(self):
@@ -266,12 +310,24 @@ class EvaluatorGUI(tk.Frame):
         self.repetitionVar = tk.IntVar()
         tk.Label(repetitionframe, text="Repetitions: ").pack(side=tk.LEFT)
         tk.Entry(repetitionframe, textvariable=self.repetitionVar).pack(side=tk.LEFT)
+        actionframe=tk.Frame(evaluationframe)
+        actionframe.pack(side=tk.TOP)
+        self.actionnoiseVar=tk.DoubleVar()
+        tk.Label(actionframe,text="Action Noise: ").pack(side=tk.LEFT)
+        tk.Entry(actionframe,textvariable=self.actionnoiseVar).pack(side=tk.LEFT)
+        signalframe=tk.Frame(evaluationframe)
+        signalframe.pack(side=tk.TOP)
+        self.signalnoiseVar=tk.DoubleVar()
+        tk.Label(signalframe,text="Signal Noise: ").pack(side=tk.LEFT)
+        tk.Entry(signalframe,textvariable=self.signalnoiseVar).pack(side=tk.LEFT)
 
         self.discountfactorVar.set(.99)
         self.runlengthVar.set(1000)
         self.repetitionVar.set(10)
+        self.actionnoiseVar.set(0.0)
+        self.signalnoiseVar.set(0.0)
 
-        self.log = ScrolledText.ScrolledText(evaluationframe, width=60, height=10)
+        self.log = ScrolledText.ScrolledText(evaluationframe, width=70, height=20)
         self.log.pack(side=tk.TOP)
 
         tk.Button(evaluationframe,text="Run Evaluation",command=self.runevaluation).pack(side=tk.TOP)
@@ -285,10 +341,11 @@ class EvaluatorGUI(tk.Frame):
         strat1=self.player1.getPlayer()
         strat2=self.player2.getPlayer()
         start=time.time()
-        result=ga.evaluate(strat1,strat2,self.runlengthVar.get(),self.discountfactorVar.get(),self.repetitionVar.get())
+        result=ga.evaluate(strat1,strat2,self.runlengthVar.get(),self.discountfactorVar.get(),self.repetitionVar.get(),self.actionnoiseVar.get(),self.signalnoiseVar.get())
         stop=time.time()
-        self.log.insert(tk.END,"Left Player: %f(%f)\nRight Player: %f(%f)\n"%(result))
+        self.log.insert(tk.END,"Left Player: %f(%f)     Right Player: %f(%f)\n"%(result))
         self.log.insert(tk.END,"Time taken: "+str(stop-start)+"\n")
+        self.log.see(tk.END)
 
 if __name__=="__main__":
     master = tk.Tk()

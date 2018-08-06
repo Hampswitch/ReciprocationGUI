@@ -2,6 +2,8 @@ import Tkinter as tk
 import math
 import teachingstrategies
 import ScrolledText
+import scipy.stats
+import numpy
 
 """
 Controls for the game simulator found in gui
@@ -207,17 +209,27 @@ class StratEstimatorControl(tk.Frame):
         self.learnerdisplay.pack(side=tk.TOP)
         self.lastplayermove=None
         self.lastopponentmove=None
+        self.skewlabel=tk.Label(self,text="Skew Measure: ")
+        self.varlabel=tk.Label(self,text="Var Measure: ")
+        self.skewlabel.pack(side=tk.TOP)
+        self.varlabel.pack(side=tk.TOP)
+        self.payofflist=[]
+        self.responselist=[]
 
     def addplayermove(self,value):
         self.lastplayermove=value
         if self.lastopponentmove is not None:
             plotpoint(self.lastopponentmove,self.lastplayermove,self.teacherdisplay,200)
+            self.responselist.append((self.lastopponentmove,value))
+            self.varlabel.config(text="Var Measure: "+str(numpy.cov(zip(*self.responselist))))
 
     def addopponentmove(self,value):
         self.lastopponentmove=value
         if self.lastplayermove is not None:
             payoff=self.lastopponentmove+math.sqrt(1-self.lastplayermove**2)
             self.learnerdisplay.addvalue(payoff)
+            self.payofflist.append(payoff)
+            self.skewlabel.config(text="Skew Measure: "+str(scipy.stats.skew(self.payofflist)))
 
 class GameDisplay(tk.Frame):
     def __init__(self, parent,discount=None):

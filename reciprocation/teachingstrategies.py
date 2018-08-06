@@ -47,7 +47,7 @@ def biasedinterpolate(s1,s2,p,b):
 
 
 class simpleteacher:
-    def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None,override=[]):
+    def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None,override=[],correctparams=False):
         if threshhold is None:
             self.threshhold=random.random()
             self.zeroresponse=random.uniform(-1,min(0,2*math.sqrt(1-self.threshhold**2)-1))
@@ -56,10 +56,16 @@ class simpleteacher:
             self.threshhold=threshhold
             self.zeroresponse=zeroresponse
             if 1+zeroresponse+.0001>2*math.sqrt(1-threshhold**2):
-                raise ValueError("Threshhold not best response for opponent: "+str(threshhold)+", "+str(zeroresponse))
+                if correctparams:
+                    self.zeroresponse=min(0,2*math.sqrt(1-threshhold**2)-1)
+                else:
+                    raise ValueError("Threshhold not best response for opponent: "+str(threshhold)+", "+str(zeroresponse))
             self.negoneresponse=negoneresponse
             if negoneresponse-.0001>1+self.zeroresponse:
-                raise ValueError("Opponent motivated to punish")
+                if correctparams:
+                    self.negoneresponse=0
+                else:
+                    raise ValueError("Opponent motivated to punish")
         if startmove is None:
             self.startmove=math.sqrt(1-self.threshhold**2)
         else:

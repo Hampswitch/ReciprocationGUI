@@ -54,7 +54,7 @@ class BucketUCBlearner:
         bucketlength=(self.lowerbounds + [1.0])[bucket + 1] - self.lowerbounds[bucket]
         if self.minbucketsize is not None and bucketlength/2 < self.minbucketsize:
             return False
-        return self.nvals[bucket]>=self.splitthreshhold*bucketlength
+        return self.nvals[bucket]>=self.splitthreshhold/bucketlength
 
 
     def observe(self,move,response):
@@ -102,9 +102,14 @@ class BucketUCB:
         self.startmove=move
 
     def reset(self):
-        self.nvals = [None for i in range(self.bucketcount)]
-        self.totals = [0.0 for i in range(self.bucketcount)]
-        self.lowerbounds = [i * 2.0 / self.bucketcount - 1 for i in range(self.bucketcount)]
+        if self.prior is None:
+            self.nvals=[None for i in range(self.bucketcount)]
+            self.totals=[0.0 for i in range(self.bucketcount)]
+            self.lowerbounds=[i*2.0/self.bucketcount-1 for i in range(self.bucketcount)]
+        else:
+            self.nvals=self.prior[0]
+            self.totals=self.prior[1]
+            self.lowerbounds=self.prior[2]
         self.lastmove = None
         self.teacher.reset()
 
@@ -151,7 +156,9 @@ class BucketUCB:
         else:
             self.nvals[bucket] = self.nvals[bucket] + 1
             self.totals[bucket] = self.totals[bucket] + response
-            if self.splitthreshhold is not None and self.nvals[bucket]>=self.splitthreshhold and \
+            bucketlength=(self.lowerbounds+[1.0])[bucket+1]-self.lowerbounds[bucket]
+            if self.splitthreshhold is not None and \
+                            self.nvals[bucket]>=self.splitthreshhold*(1+math.log(2/(self.bucketcount*bucketlength),2)) and \
                     (self.maxbuckets is None or len(self.nvals)<= self.maxbuckets) and \
                                     (self.lowerbounds+[1.0])[bucket+1]-self.lowerbounds[bucket]>self.minbucketsize:
                 if self.splitval is None:

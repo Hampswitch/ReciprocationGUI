@@ -4,6 +4,7 @@ import math
 import learningstrategies as ls
 import reciprocation.UCB
 import teachingstrategies as ts
+import teachinglearning as tl
 
 class gametracker(tk.Frame):
     def __init__(self,master,curplayer=0):
@@ -26,8 +27,8 @@ class gametracker(tk.Frame):
         #self.stratselector[1] = learners.Static(displaypanel)
         #self.stratselector[1]=learners.BucketLearner(displaypanel,10)
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player(learner=ls.UCTlearner(c=1.0)))
-        self.stratselector[1]=controls.textlearner(displaypanel,
-                                                   reciprocation.UCB.BucketUCB(maxbuckets=1000, splitthreshhold=2, bucketcount=2))
+        self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.BucketUCB(splitthreshhold=1,splitval=1,bucketcount=8,minbucketsize=.001,exploration=1.0))
+        #self.stratselector[1]=controls.textlearner(displaypanel,tl.BucketUCBTL())
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=2))
         #self.stratselector[1] = controls.textlearner(displaypanel,ls.player("UCT", c=1, teachingstrat=ts.simpleteacher(.85, -1 , -1),teachingweight=2))
         self.stratselector[1].pack(side=tk.LEFT)
