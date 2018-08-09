@@ -36,7 +36,7 @@ class BucketUCBlearner:
         if prior is None:
             self.nvals=[0 for i in range(buckets)]
             self.totals=[0.0 for i in range(buckets)]
-            self.lowerbounds=[i*2.0/buckets-1 for i in range(s)]
+            self.lowerbounds=[i*2.0/buckets-1 for i in range(buckets)]
         else:
             self.nvals=prior[0]
             self.totals=prior[1]
@@ -84,6 +84,10 @@ class BucketUCB:
             self.nvals=[None for i in range(bucketcount)]
             self.totals=[0.0 for i in range(bucketcount)]
             self.lowerbounds=[i*2.0/bucketcount-1 for i in range(bucketcount)]
+        elif prior==0:
+            self.nvals = [1 for i in range(bucketcount)]
+            self.totals = [0.0 for i in range(bucketcount)]
+            self.lowerbounds = [i * 2.0 / bucketcount - 1 for i in range(bucketcount)]
         else:
             self.nvals=prior[0]
             self.totals=prior[1]

@@ -124,6 +124,9 @@ def meshlookup(data, x, y):
     ymaxfactor=(y-ymin)/(ymax-ymin)
     return data[ymin][xmin]*yminfactor*xminfactor+data[ymin][xmax]*yminfactor*xmaxfactor+data[ymax][xmin]*ymaxfactor*xminfactor+data[ymax][xmax]*ymaxfactor*xmaxfactor
 
+def creategridvals(resolution):
+    return [math.sin(-math.pi/2 + math.pi*i/(resolution-1)) for i in range(resolution)]
+
 if __name__=="__main__":
     #import learningstrategies as ls
     #import teachingstrategies as ts

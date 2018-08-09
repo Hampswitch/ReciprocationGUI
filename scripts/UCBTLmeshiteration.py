@@ -7,6 +7,7 @@ import reciprocation.UCB as ucb
 import sys
 
 """
+
 Parameter ideas for UCBTL script
   Initial strategy (variants on simpleteacher)
   discountfactor/iterations
