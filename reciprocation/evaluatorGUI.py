@@ -48,6 +48,21 @@ class SimpleTeacherSelector(tk.Frame):
     def __str__(self):
         return "Simple Teacher "+str(self.params.getparameters())
 
+class NoisyBucketSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self, master)
+
+        tk.Label(self,text="Noisy Bucket Simple Teacher").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Threshhold: ",tk.DoubleVar,.7),("Zero Response: ",tk.DoubleVar,0),("-1 Response: ",tk.DoubleVar,0),("startmove",tk.DoubleVar,2.0),("Buckets: ",tk.IntVar,8),("Split: ",tk.IntVar,0)])
+        self.params.pack(side=tk.TOP)
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        return ts.bucketnoiseteacher(params[0],params[1],params[2],params[4],params[3],params[5]==1)
+
+    def __str__(self):
+        return "Noisy Bucket Teacher "+str(self.params.getparameters())
+
 class UCTSelector(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self, master)
@@ -80,10 +95,10 @@ class UCBSelector(tk.Frame):
         self.params=ParameterPanel(self,[("Bucket Count: ",tk.IntVar,8),
                                          ("Exploration: ",tk.DoubleVar,1),
                                          ("Radial: ",tk.BooleanVar,False),
-                                         ("Min Bucket Size",tk.DoubleVar,0.0),
+                                         ("Min Bucket Size",tk.DoubleVar,0.001),
                                          ("Max Buckets",tk.IntVar,-1),
-                                         ("Split Threshhold",tk.IntVar,-1),
-                                         ("Split Value",tk.DoubleVar)])
+                                         ("Split Threshhold",tk.IntVar,1),
+                                         ("Split Value",tk.DoubleVar,1)])
         self.params.pack(side=tk.TOP)
 
     def __str__(self):
@@ -220,7 +235,8 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel,text="KNN",command=self.setKNN).pack(side=tk.TOP)
         tk.Button(buttonpanel,text="UCBTL",command=self.setUCBTL).pack(side=tk.TOP)
         tk.Button(buttonpanel,text="EXP3",command=self.setEXP3).pack(side=tk.TOP)
-        tk.Button(buttonpanel,text="Balancer",command=lambda:self.setSelector(BalancerSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Balancer", command=lambda: self.setSelector(BalancerSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Noisy Bucket", command=lambda: self.setSelector(NoisyBucketSelector)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None

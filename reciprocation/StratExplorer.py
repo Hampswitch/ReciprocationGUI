@@ -226,7 +226,8 @@ class giftDisplay(tk.Frame):
             self.displaycanvas.create_oval(x-1,y-1,x+1,y+1,tags="pref")
         strat=self._getstrat()
         pcoords=[]
-        for a in [2*math.pi*x/points for x in range(points)]:
+        lcoords=[]
+        for a in [2*math.pi*x/points-math.pi/2 for x in range(points)]:
             xpayoff=math.sin(a)
             ypayoff=math.cos(a)
             response=strat.respond(xpayoff)
@@ -241,7 +242,11 @@ class giftDisplay(tk.Frame):
             (x, y) = toCanvas(xvalue * (1 - xoppwt) + xoppvalue * xoppwt-xenvyvalue, yvalue * (1 - yoppwt) + yoppvalue * yoppwt-yenvyvalue, 400)
             pcoords.append(x)
             pcoords.append(y)
-        self.displaycanvas.create_polygon(pcoords,fill="grey",tags="pref",width=1,outline="black")
+            if ypayoff>=0:
+                lcoords.append(x)
+                lcoords.append(y)
+        self.displaycanvas.create_polygon(pcoords,fill="light grey",tags="pref",width=1,outline="black")
+        self.displaycanvas.create_line(lcoords,fill="red",width=2,tags="pref")
         m=self.oppmove.get()
         r=strat.respond(m)
         (x,y)=toCanvas(m,math.sqrt(1-m**2),400)

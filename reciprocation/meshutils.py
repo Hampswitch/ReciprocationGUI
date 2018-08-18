@@ -23,7 +23,7 @@ def calcresult(params):
     teacher.setstartmove(response)
     return (startmove,response,ga.evaluate(learner,teacher,iterations,discountfactor,repetitions)[2])
 
-def createmesh(teacher,learner,gridvals=None,iterations=1000,discountfactor=.99,repetitions=10,poolsize=None):
+def createmesh(teacher,learner,gridvals=None,iterations=1000,discountfactor=.99,repetitions=10,poolsize=None,correct=True):
     if gridvals is None:
         gridvals=[-x for x in scriptutil.rvals[-1:0:-1]]+scriptutil.rvals
     result=pandas.DataFrame(index=gridvals,columns=gridvals)
@@ -35,6 +35,8 @@ def createmesh(teacher,learner,gridvals=None,iterations=1000,discountfactor=.99,
                 learner.setstartmove(startmove)
                 teacher.setstartmove(response)
                 result[response][startmove]=ga.evaluate(learner,teacher,iterations,discountfactor,repetitions)[2]
+                if correct:
+                    result[response][startmove]=result[response][startmove]-math.sqrt(1-response*response)-startmove
         return result
     else:
         pool=multiprocessing.Pool(processes=poolsize)
@@ -126,6 +128,8 @@ def meshlookup(data, x, y):
 
 def creategridvals(resolution):
     return [math.sin(-math.pi/2 + math.pi*i/(resolution-1)) for i in range(resolution)]
+
+
 
 if __name__=="__main__":
     #import learningstrategies as ls

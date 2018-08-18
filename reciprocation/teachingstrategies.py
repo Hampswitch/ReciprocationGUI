@@ -43,8 +43,46 @@ def biasedinterpolate(s1,s2,p,b):
     result=interpolate((s1[0],s1[1]+shift),s2,p)
     return result
 
+class bucketnoiseteacher:
+    def __init__(self,threshhold,zeroresponse,negoneresponse,buckets,startmove=0,split=False,irrationalopponent=False):
+        self.threshhold=threshhold
+        self.zeroresponse=zeroresponse
+        self.negoneresponse=negoneresponse
+        self.buckets=buckets
+        self.startmove=startmove
+        self.split=split
+        self.irrationalopponent=irrationalopponent
+        self.lowerbounds=[i*2.0/buckets-1 for i in range(buckets)]
 
+    def __str__(self):
+        return "Bucket Noise Simple Teacher: "+str((self.threshhold,self.zeroresponse,self.negoneresponse,self.buckets))
 
+    def __repr__(self):
+        return str(self)
+
+    def reset(self):
+        self.lowerbounds = [i * 2.0 / self.buckets - 1 for i in range(self.buckets)]
+
+    def clone(self):
+        return bucketnoiseteacher(self.threshhold,self.zeroresponse,self.negoneresponse,self.buckets,self.startmove,self.split)
+
+    def respond(self,oppchoice):
+        if oppchoice is None:
+            result=self.startmove
+        elif oppchoice>=self.threshhold:
+            if self.irrationalopponent:
+                result=math.sqrt(1-oppchoice**2)
+            else:
+                result=math.sqrt(1-self.threshhold**2)
+        elif oppchoice>=0:
+            result=interpolate((0,self.zeroresponse),(self.threshhold,math.sqrt(1-self.threshhold**2)),oppchoice)
+        else:
+            result=interpolate((-1,self.negoneresponse),(0,self.zeroresponse),oppchoice)
+        bucket=bisect.bisect(self.lowerbounds,result)-1
+        result=self.lowerbounds[bucket]+random.random()*((self.lowerbounds+[1.0])[bucket+1]-self.lowerbounds[bucket])
+        if self.split:
+            self.lowerbounds[bucket + 1:bucket + 1] = [(self.lowerbounds[bucket] + (self.lowerbounds + [1.0])[bucket + 1]) / 2.0]
+        return result
 
 class simpleteacher:
     def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None,override=[],correctparams=False):
