@@ -175,21 +175,23 @@ class BucketUCB:
                 self.totals[bucket:bucket+1]=[newtotals,newtotals]
                 self.lowerbounds[bucket+1:bucket+1]=[(self.lowerbounds[bucket]+(self.lowerbounds+[1.0])[bucket+1])/2.0]
 
-    def pickmove(self):
+    def pickmove(self,teacherwt=1.0,learnerwt=1.0):
         if None in self.nvals:
             return random.choice([i for i in range(len(self.nvals)) if self.nvals[i] is None])
         else:
             n=sum(self.nvals)
             if not self.radial:
-                self.status=[(self.totals[i]/self.nvals[i]+
-                                math.sqrt(self.exploration*math.log(n)/self.nvals[i])*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i])+
+                self.status=[((self.totals[i]/self.nvals[i]+
+                                math.sqrt(self.exploration*math.log(n)/self.nvals[i])*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i]))*learnerwt+
                                 getavgpayoff(self.lowerbounds[i],(self.lowerbounds+[1.0])[i+1])+
-                              (self.teacher.evalmove(self.lowerbounds[i])+self.teacher.evalmove((self.lowerbounds+[1.0])[i+1]))/2,i) for i in range(len(self.nvals))]
+                              teacherwt*(self.teacher.evalmove(self.lowerbounds[i])+self.teacher.evalmove((self.lowerbounds+[1.0])[i+1]))/2,i)
+                             for i in range(len(self.nvals))]
             else:
-                self.status=[(self.totals[i] / self.nvals[i] +
-                                      math.sqrt(self.exploration * math.log(n) / self.nvals[i]) +
+                raise NotImplementedError("radial move evaluation not currently correct")
+                self.status=[((self.totals[i] / self.nvals[i] +
+                                      math.sqrt(self.exploration * math.log(n) / self.nvals[i]))*learnerwt +
                                       getavgpayoff(math.sin(math.pi*self.lowerbounds[i]/2.0), math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)) +
-                              (self.teacher.evalmove(math.sin(math.pi*self.lowerbounds[i]/2.0))+self.teacher.evalmove(math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)))/2, i) for i in range(len(self.nvals))]
+                              teacherwt*(self.teacher.evalmove(math.sin(math.pi*self.lowerbounds[i]/2.0))+self.teacher.evalmove(math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)))/2, i) for i in range(len(self.nvals))]
         return max(self.status)[1]
 
 if __name__=="__main__":

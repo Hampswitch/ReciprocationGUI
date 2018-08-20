@@ -62,7 +62,7 @@ class functioncontrol(tk.Frame):
             self.resolutionvar=tk.IntVar()
             self.resolutionvar.set(10)
             self.filenamevar=tk.StringVar()
-            self.filenamevar.set("results/meshiterationp0.csv")
+            self.filenamevar.set("results/griditerator0.csv")
             self.scorevar=tk.StringVar()
             self.scorevar.set("score")
             self.scalevar=tk.DoubleVar()
