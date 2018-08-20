@@ -187,7 +187,6 @@ class BucketUCB:
                               teacherwt*(self.teacher.evalmove(self.lowerbounds[i])+self.teacher.evalmove((self.lowerbounds+[1.0])[i+1]))/2,i)
                              for i in range(len(self.nvals))]
             else:
-                raise NotImplementedError("radial move evaluation not currently correct")
                 self.status=[((self.totals[i] / self.nvals[i] +
                                       math.sqrt(self.exploration * math.log(n) / self.nvals[i]))*learnerwt +
                                       getavgpayoff(math.sin(math.pi*self.lowerbounds[i]/2.0), math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)) +

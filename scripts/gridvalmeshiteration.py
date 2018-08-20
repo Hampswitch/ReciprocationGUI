@@ -54,7 +54,7 @@ if __name__=="__main__":
     p=int(sys.argv[1])
     threshhold,zero,negone,gamelength,discountfactor,iterations,gridval,meshmult,ownbuckets,ownexp,ownprior,oppbuckets,oppexp=params[p]
     teacher = ts.simpleteacher(threshhold, zero, negone)
-    learner = ucb.BucketUCB(bucketcount=oppbuckets, exploration=oppexp,splitthreshhold=1,splitval=1,minbucketsize=.001)
+    learner = ucb.BucketUCB(bucketcount=oppbuckets, exploration=oppexp,splitthreshhold=1,splitval=1,minbucketsize=.001,radial=False)
     mesh = meshutils.createmesh(teacher, learner, None, gamelength, discountfactor, iterations,poolsize=20)
     print "iteration,params,startmove,response,score"
     outputmesh(0,p,mesh)
