@@ -17,7 +17,7 @@ class NonTeacher:
     def reset(self):
         pass
 
-def getprior(teacher, buckets, radial, aggcount=10,obscount=1):
+def getprior(teacher, buckets, radial=False, aggcount=10,obscount=1):
     nvals=[obscount for i in range(buckets)]
     totals=[0.0 for i in range(buckets)]
     lowerbounds=[i*2.0/buckets-1 for i in range(buckets)]
@@ -111,9 +111,9 @@ class BucketUCB:
             self.totals=[0.0 for i in range(self.bucketcount)]
             self.lowerbounds=[i*2.0/self.bucketcount-1 for i in range(self.bucketcount)]
         else:
-            self.nvals=self.prior[0]
-            self.totals=self.prior[1]
-            self.lowerbounds=self.prior[2]
+            self.nvals=[x for x in self.prior[0]]
+            self.totals=[x for x in self.prior[1]]
+            self.lowerbounds=[x for x in self.prior[2]]
         self.lastmove = None
         self.teacher.reset()
 

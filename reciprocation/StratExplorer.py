@@ -110,6 +110,9 @@ class functioncontrol(tk.Frame):
         x = (resolution - 1) / 2.0
         filename=self.filenamevar.get()
         data = pandas.read_csv(filename)
+        for k,v in self.fixedvars.get().items():
+            if not v in data[k].unique():
+                raise ValueError("Value not found in {}: {}".format(k,v))
         fixedvalues = meshutils.fixdict(data, self.fixedvars.get())
         mesh = meshutils.getmesh(data, fixedvalues, "startmove", "response", self.scorevar.get())
         mesh=meshutils.correctmesh(mesh,self.scalevar.get())

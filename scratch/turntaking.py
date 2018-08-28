@@ -1,24 +1,25 @@
 
 import math
 
-x=1.0
+x=0.0
 y=0.0
-n=1
-delta=.1
+n=0
 curplayer="y"
 df=.999
 curdf=1.0
-xdf=1.0
+xdf=0.0
 ydf=0.0
-ndf=1.0
+ndf=0.0
 
 for i in range(1000000):
-    if math.sqrt((1-x/n)**2+(y/n)**2)<delta:
+    if i==0:
         curplayer="y"
-        print "switch: "+str(n)
-    if math.sqrt((1 - y / n) ** 2 + (x / n) ** 2) < delta:
-        curplayer = "x"
-        print "switch: "+str(n)
+    elif math.floor(math.log(i,10))%2==0:
+        curplayer="x"
+    elif math.floor(math.log(i,10))%2==1:
+        curplayer="y"
+    else:
+        raise ValueError("error")
     if curplayer=="x":
         x=x+1
         n=n+1
