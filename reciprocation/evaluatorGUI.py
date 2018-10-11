@@ -4,6 +4,7 @@ and compare them with each other
 """
 
 import time
+import math
 import Tkinter as tk
 import ScrolledText
 import genetic_alg as ga
@@ -30,6 +31,9 @@ class ParameterPanel(tk.Frame):
     def getparameters(self):
         return [x.get() for x in self.vars]
 
+    def setparam(self,index,value):
+        self.vars[index].set(value)
+
 
 class SimpleTeacherSelector(tk.Frame):
     def __init__(self,master):
@@ -42,6 +46,9 @@ class SimpleTeacherSelector(tk.Frame):
     def getPlayer(self):
         params=self.params.getparameters()
         if abs(params[3])>1.0:
+            if 2*math.sqrt(1-params[0]**2)<1+params[1]:
+                self.params.setparam(1,2*math.sqrt(1-params[0]**2)-1.01)
+                params = self.params.getparameters()
             return ts.simpleteacher(params[0],params[1],params[2])
         else:
             return ts.simpleteacher(params[0],params[1],params[2],override=[params[3]])
@@ -336,12 +343,18 @@ class EvaluatorGUI(tk.Frame):
         self.signalnoiseVar=tk.DoubleVar()
         tk.Label(signalframe,text="Signal Noise: ").pack(side=tk.LEFT)
         tk.Entry(signalframe,textvariable=self.signalnoiseVar).pack(side=tk.LEFT)
+        confintframe=tk.Frame(evaluationframe)
+        confintframe.pack(side=tk.TOP)
+        self.confintVar=tk.DoubleVar()
+        tk.Label(confintframe,text="Confidence Interval: ").pack(side=tk.LEFT)
+        tk.Entry(confintframe,textvariable=self.confintVar).pack(side=tk.LEFT)
 
         self.discountfactorVar.set(.99)
         self.runlengthVar.set(1000)
         self.repetitionVar.set(10)
         self.actionnoiseVar.set(0.0)
         self.signalnoiseVar.set(0.0)
+        self.confintVar.set(.95)
 
         self.log = ScrolledText.ScrolledText(evaluationframe, width=70, height=20)
         self.log.pack(side=tk.TOP)
@@ -357,11 +370,12 @@ class EvaluatorGUI(tk.Frame):
         strat1=self.player1.getPlayer()
         strat2=self.player2.getPlayer()
         start=time.time()
-        result=ga.evaluate(strat1,strat2,self.runlengthVar.get(),self.discountfactorVar.get(),self.repetitionVar.get(),self.actionnoiseVar.get(),self.signalnoiseVar.get())
+        result=ga.evaluate(strat1,strat2,self.runlengthVar.get(),self.discountfactorVar.get(),self.repetitionVar.get(),self.actionnoiseVar.get(),self.signalnoiseVar.get(),alpha=1-self.confintVar.get())
         stop=time.time()
-        self.log.insert(tk.END,"Left Player: %f(%f)     Right Player: %f(%f)\n"%(result))
+        self.log.insert(tk.END,"Left Player: {0:5.4f}({1:5.4f}) ({4:5.4f}-{5:5.4f})\n     Right Player: {2:5.4f}({3:5.4f}) ({6:5.4f}-{7:5.4f})\n".format(result[0],result[1],result[2],result[3],result[4][0],result[4][1],result[5][0],result[5][1]))
         self.log.insert(tk.END,"Time taken: "+str(stop-start)+"\n")
         self.log.see(tk.END)
+        self.bell()
 
 if __name__=="__main__":
     master = tk.Tk()

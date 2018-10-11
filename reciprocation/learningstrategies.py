@@ -56,6 +56,7 @@ class fastlearner:
     def reset(self):
         self.moves = [0, .25, .5, .75, 1]
         self.payoffs = [None, None, None, None, None]
+        self.lastmove=None
 
     def clone(self):
         result=fastlearner()

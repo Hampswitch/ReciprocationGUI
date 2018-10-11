@@ -15,7 +15,7 @@ class gametracker(tk.Frame):
         displaypanel.pack(side=tk.TOP)
         self.stratselector=[None,None]
         #self.stratselector[0] = controls.ReciprocalStrategySelector(displaypanel)
-        self.stratselector[0]=controls.textlearner(displaypanel,ts.simpleteacher(.7,0,0))
+        self.stratselector[0]=controls.textlearner(displaypanel,ts.simpleteacher(.95,-.8,0))
         #self.stratselector[0]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=.25))
         #self.stratselector[0] = controls.textlearner(displaypanel,ls.player("UCT", c=1, teachingstrat=ts.simpleteacher(.85, -1, -1),teachingweight=8))
         self.stratselector[0].pack(side=tk.LEFT)
@@ -28,6 +28,7 @@ class gametracker(tk.Frame):
         #self.stratselector[1]=learners.BucketLearner(displaypanel,10)
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player(learner=ls.UCTlearner(c=1.0)))
         self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.BucketUCB(splitthreshhold=1,splitval=1,bucketcount=8,minbucketsize=.001,exploration=1.0))
+        #self.stratselector[1]=controls.textlearner(displaypanel,ls.fastlearner())
         #self.stratselector[1]=controls.textlearner(displaypanel,tl.BucketUCBTL())
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=2))
         #self.stratselector[1] = controls.textlearner(displaypanel,ls.player("UCT", c=1, teachingstrat=ts.simpleteacher(.85, -1 , -1),teachingweight=2))

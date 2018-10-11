@@ -95,7 +95,7 @@ class simpleteacher:
             self.zeroresponse=zeroresponse
             if 1+zeroresponse+.0001>2*math.sqrt(1-threshhold**2):
                 if correctparams:
-                    self.zeroresponse=min(0,2*math.sqrt(1-threshhold**2)-1)
+                    self.zeroresponse=min(0,2*math.sqrt(1-threshhold**2)-1.0000001)
                 else:
                     raise ValueError("Threshhold not best response for opponent: "+str(threshhold)+", "+str(zeroresponse))
             self.negoneresponse=negoneresponse

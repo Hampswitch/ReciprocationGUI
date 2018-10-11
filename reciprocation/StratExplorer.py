@@ -200,7 +200,7 @@ class giftDisplay(tk.Frame):
         frame.pack(side=tk.TOP)
         tk.Label(self,text="Response Function").pack(side=tk.TOP)
         self.strat=teachingstrategies.simpleteacher(.95,-1,-1)
-        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],simpleteachercontrol=False,meshcontrol=True)
+        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],simpleteachercontrol=True,meshcontrol=True)
         self.stratcontrol.pack(side=tk.LEFT)
         self.funccanvas = tk.Canvas(frame, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
         self.funccanvas.pack(side=tk.LEFT)
