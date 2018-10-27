@@ -193,5 +193,99 @@ class BucketUCB:
                               teacherwt*(self.teacher.evalmove(math.sin(math.pi*self.lowerbounds[i]/2.0))+self.teacher.evalmove(math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)))/2, i) for i in range(len(self.nvals))]
         return max(self.status)[1]
 
+
+
+
+
+
+
+
+
+
+class TrackBucketUCB:
+    def __init__(self, bucketcount=8, exploration=1.0, splitthreshold=4, minbucketsize=1e-10, startmove=None, radial=True, widthexp=0):
+        self.startmove=startmove
+        self.exploration=exploration
+        self.splitthreshold=splitthreshold
+        self.minbucketsize=minbucketsize
+        self.radial=radial
+        self.widthexp=widthexp
+        self.bucketcount=bucketcount
+        self.buckets=[None for i in range(bucketcount)]
+        self.lowerbounds=[i * 2.0 / bucketcount - 1 for i in range(bucketcount)]
+        self.lastmove=None
+
+    def setstartmove(self,move):
+        self.startmove=move
+
+    def reset(self):
+        self.buckets=[None for i in range(self.bucketcount)]
+        self.lowerbounds = [i * 2.0 / self.bucketcount - 1 for i in range(self.bucketcount)]
+        self.lastmove=None
+
+    def __str__(self):
+        return "UCB Track Bucket \n  Buckets: "+str(self.buckets)+"\n  Lowerbounds: "+str(self.lowerbounds)
+
+    def __repr__(self):
+        return str(self)
+
+    def getStatus(self):
+        return str(self)
+
+    def getDescription(self):
+        return str(self)
+
+    def respond(self,opponentmove):
+        if self.lastmove is not None:
+            self.update(self.lastmove, opponentmove)
+        if self.lastmove is None and self.startmove is not None:
+            bucket = bisect.bisect(self.lowerbounds, self.startmove) - 1
+            result = self.startmove
+        else:
+            bucket = self.pickmove()
+            if self.radial:
+                result = math.sin(math.pi * (self.lowerbounds[bucket] + random.random() * (
+                (self.lowerbounds + [1.0])[bucket + 1] - self.lowerbounds[bucket])) / 2.0)
+            else:
+                result = self.lowerbounds[bucket] + random.random() * (
+                (self.lowerbounds + [1.0])[bucket + 1] - self.lowerbounds[bucket])
+        self.lastmove=(bucket,result)
+        return result
+
+    def update(self,move,response):
+        if self.buckets[move[0]] is None:
+            self.buckets[move[0]]=[(move[1],response)]
+        else:
+            self.buckets[move[0]].append((move[1],response))
+            bucketlength=(self.lowerbounds+[1.0])[move[0]+1]-self.lowerbounds[move[0]]
+            if len(self.buckets[move[0]])>self.splitthreshold and (self.lowerbounds+[1.0])[move[0]+1]-self.lowerbounds[move[0]]>self.minbucketsize:
+                threshold=((self.lowerbounds+[1.0])[move[0]+1]+self.lowerbounds[move[0]])/2
+                lowerbucket=[m for m in self.buckets[move[0]] if m[1]<threshold]
+                upperbucket=[m for m in self.buckets[move[0]] if m[1]>threshold]
+                if len(lowerbucket)==0:
+                    lowerbucket=None
+                if len(upperbucket)==0:
+                    upperbucket=None
+                self.buckets[move[0]]=lowerbucket
+                self.buckets.insert(move[0]+1,upperbucket)
+                self.lowerbounds.insert(move[0]+1,threshold)
+
+    def pickmove(self):
+        if None in self.buckets:
+            return random.choice([i for i in range(len(self.buckets)) if self.buckets[i] is None])
+        else:
+            n=sum([len(b) for b in self.buckets])
+            if not self.radial:
+                self.status=[(sum([r for m,r in self.buckets[i]])/len(self.buckets[i])+
+                                math.sqrt(self.exploration*math.log(n)/len(self.buckets[i]))*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i])**self.widthexp+
+                                getavgpayoff(self.lowerbounds[i],(self.lowerbounds+[1.0])[i+1]),i)
+                             for i in range(len(self.buckets))]
+            else:
+                self.status=[(sum([r for m,r in self.buckets[i]]) / len(self.buckets[i]) +
+                                      math.sqrt(self.exploration * math.log(n) / len(self.buckets[i]))*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i])**self.widthexp +
+                                      getavgpayoff(math.sin(math.pi*self.lowerbounds[i]/2.0), math.sin(math.pi*(self.lowerbounds + [1.0])[i + 1]/2.0)), i)
+                             for i in range(len(self.buckets))]
+        return max(self.status)[1]
+
 if __name__=="__main__":
     pass

@@ -55,6 +55,21 @@ class SimpleTeacherSelector(tk.Frame):
     def __str__(self):
         return "Simple Teacher "+str(self.params.getparameters())
 
+class TrackUCBSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Track Bucket UCB").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Bucket count: ",tk.IntVar,8),("Exploration: ",tk.DoubleVar,1.0),("Split Threshold: ",tk.IntVar,4),
+                                         ("Min Bucket Size: ",tk.DoubleVar,.001),("Radial: ",tk.IntVar,1),("Width-based explore: ",tk.IntVar,0)])
+        self.params.pack(side=tk.TOP)
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        return ucb.TrackBucketUCB(params[0],params[1],params[2],params[3],None,params[4]!=0,params[5])
+
+    def __str__(self):
+        return "Track Bucket UCB "+str(self.params.getparameters())
+
 class NoisyBucketSelector(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self, master)
@@ -65,7 +80,7 @@ class NoisyBucketSelector(tk.Frame):
 
     def getPlayer(self):
         params=self.params.getparameters()
-        return ts.bucketnoiseteacher(params[0],params[1],params[2],params[4],params[3],params[5]==1)
+        return ts.bucketnoiseteacher(params[0],params[1],params[2],params[4],params[3],params[5]!=0)
 
     def __str__(self):
         return "Noisy Bucket Teacher "+str(self.params.getparameters())
@@ -244,6 +259,7 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel,text="EXP3",command=self.setEXP3).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Balancer", command=lambda: self.setSelector(BalancerSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Noisy Bucket", command=lambda: self.setSelector(NoisyBucketSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Track UCB", command=lambda: self.setSelector(TrackUCBSelector)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None

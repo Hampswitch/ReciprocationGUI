@@ -3,7 +3,7 @@ import math
 import random
 
 
-def interpolate(s1,s2,p):
+def interpolate(s1,s2,p,verbose=False):
     """
 
     :param s1: tuple of (opponents gift to player, player's gift to opponent)
@@ -18,6 +18,8 @@ def interpolate(s1,s2,p):
     try:
         slope=(y2-y1)/(x2-x1)
     except ZeroDivisionError:
+        if verbose:
+            print "Zero Division Error - infinite slope"
         return x2-math.sqrt(1-p**2)
     intercept=y1-slope*x1
     x3=p
@@ -26,15 +28,37 @@ def interpolate(s1,s2,p):
     B=2*(slope*(intercept-y3)-x3)
     C=y3**2-1+x3**2-2*intercept*y3+intercept**2
     try:
-        x=(-B+math.sqrt(B**2-4*A*C))/(2*A)
+        if s1[1]==-1:
+            pos1=-1
+        elif s1[1]/math.sqrt(1-s1[1]**2)<-1/slope:
+            pos1=-1
+        else:
+            pos1=1
+        if s2[1]==-1:
+            pos2=-1
+        elif s2[1]/math.sqrt(1-s2[1]**2)<-1/slope:
+            pos2=-1
+        else:
+            pos2=1
+        if pos1==pos2:
+            factor=pos1
+        elif abs(p-s1[0])<abs(p-s2[0]):
+            factor=pos1
+        else:
+            factor=pos2
+        x=(-B+factor*math.sqrt(B**2-4*A*C))/(2*A)
     except ValueError:
-        b=(p-s1[0])/(s2[0]-s1[0])
-        return (1-b)*s1[1]+b*s2[1]
+        if verbose:
+            print "Quadratic Error: A={} B={} C={}".format(A,B,C)
+            print "({} + sqrt({}))/{}".format(-B,B**2-4*A*C,2*A)
+            print "({},{}) ({},{})".format(x1,y1,x2,y2)
+        x=-1/slope
+        return x*math.sqrt(1/(1+x*x))
     y=slope*x+intercept
     y=min(max(y1,y2),y)
     result=y-y3
-    result=max(min(s1[1],s2[1]),result)
-    result=min(max(s1[1],s2[1]),result)
+    #result=max(min(s1[1],s2[1]),result)
+    #result=min(max(s1[1],s2[1]),result)
     return result
 
 

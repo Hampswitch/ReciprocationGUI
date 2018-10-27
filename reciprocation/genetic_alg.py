@@ -96,44 +96,7 @@ class randomlinearstrat(genestrat):
                 result.stratlist=[x for x in result.stratlist[:i]+other.stratlist[j:]]
         return result
 
-def evaluate_parallel(strat1,strat2,iterations,discountfactor=1.0,repetitions=1,actionnoise=0.0,signalnoise=0.0,alpha=.05):
-    curdiscount = 1.0
-    score1list = []
-    score2list = []
-    move = None
-    for j in range(repetitions):
-        normalize = 0.0
-        score1 = 0.0
-        score2 = 0.0
-        strat1.reset()
-        strat2.reset()
-        for i in range(iterations):
-            move = strat1.respond(move)
-            if actionnoise > 0:
-                move = max(-1.0, min(1.0, move + random.normalvariate(0, actionnoise)))
-            score1 = score1 + curdiscount * math.sqrt(1 - move ** 2)
-            score2 = score2 + curdiscount * move
-            if signalnoise > 0:
-                move = max(-1.0, min(1.0, move + random.normalvariate(0, signalnoise)))
-            move = strat2.respond(move)
-            if actionnoise > 0:
-                move = max(-1.0, min(1.0, move + random.normalvariate(0, actionnoise)))
-            score1 = score1 + curdiscount * move
-            score2 = score2 + curdiscount * math.sqrt(1 - move ** 2)
-            if signalnoise > 0:
-                move = max(-1.0, min(1.0, move + random.normalvariate(0, signalnoise)))
-            normalize = normalize + curdiscount
-            curdiscount = curdiscount * discountfactor
-        move = None
-        curdiscount = 1.0
-        score1list.append(score1 / normalize)
-        score2list.append(score2 / normalize)
-    if repetitions>1:
-        return (np.mean(score1list), np.std(score1list), np.mean(score2list), np.std(score2list),
-            smsa.DescrStatsW(score1list).tconfint_mean(alpha=alpha),
-            smsa.DescrStatsW(score2list).tconfint_mean(alpha=alpha))
-    else:
-        return (score1list[0],score2list[0])
+
 
 def evaluate(strat1, strat2, iterations, discountfactor=1.0, repetitions=1,actionnoise=0.0,signalnoise=0.0,alpha=.05):
     curdiscount=1.0

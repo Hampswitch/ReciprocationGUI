@@ -221,7 +221,8 @@ class StratEstimatorControl(tk.Frame):
         if self.lastopponentmove is not None:
             plotpoint(self.lastopponentmove,self.lastplayermove,self.teacherdisplay,200)
             self.responselist.append((self.lastopponentmove,value))
-            self.varlabel.config(text="Var Measure: "+str(numpy.cov(zip(*self.responselist))))
+            if len(self.responselist)>1:
+                self.varlabel.config(text="Var Measure: "+str(numpy.cov(zip(*self.responselist))))
 
     def addopponentmove(self,value):
         self.lastopponentmove=value
@@ -229,7 +230,12 @@ class StratEstimatorControl(tk.Frame):
             payoff=self.lastopponentmove+math.sqrt(1-self.lastplayermove**2)
             self.learnerdisplay.addvalue(payoff)
             self.payofflist.append(payoff)
-            self.skewlabel.config(text="Skew Measure: "+str(scipy.stats.skew(self.payofflist)))
+            if len(self.responselist)>1:
+                skew=scipy.stats.skew(self.payofflist)
+                pmin=min(self.payofflist)
+                prange=max(self.payofflist)-pmin
+                normskew=scipy.stats.skew([(p-pmin)/prange for p in self.payofflist])
+                self.skewlabel.config(text="Skew Measure: {:.4} ({:.4})".format(skew,normskew))
 
 class GameDisplay(tk.Frame):
     def __init__(self, parent,discount=None):
@@ -272,11 +278,16 @@ class GameDisplay(tk.Frame):
         self.label3.pack(side=tk.TOP)
         self.label4=tk.Label(self,text="Discounted Average: x(0) y(0)")
         self.label4.pack(side=tk.TOP)
-        self.debug=ScrolledText.ScrolledText(self,width=40,height=10)
+        self.debug=ScrolledText.ScrolledText(self,width=50,height=10)
         self.debug.pack(side=tk.TOP)
+        self.p0=0
+        self.p1=0
 
     def addmove(self, x, y, player):
         self.debug.insert(tk.END,"Player %d: (self: %.3f, opponent: %.3f)\n"%(player,[x,y][player],[y,x][player]))
+        self.debug.insert(tk.END, "   Last Pair: ({:.3},{:.3})\n".format(self.p0 + x, self.p1 + y))
+        self.p0=x
+        self.p1=y
         self.debug.see(tk.END)
         if player!=self.curplayer:
             raise ValueError("Wrong player sent move")
