@@ -39,8 +39,10 @@ def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",
         # Create potential children
         expandpop=[perturbed for member in population for perturbed in getattr(member,perturbfunc)(stepsize,*perturbargs)]
         # Evaluate potential children
-        evaluations=paralleleval(opponent,expandpop,iterations,discountfactor,repetitions,processes)
-        #evaluations=nonparalleleval(opponent,expandpop,iterations,discountfactor,repetitions)
+        if processes is not None:
+            evaluations=paralleleval(opponent,expandpop,iterations,discountfactor,repetitions,processes)
+        else:
+            evaluations=nonparalleleval(opponent,expandpop,iterations,discountfactor,repetitions)
         if verbose:
             print stepsize
             print(sum(evaluations)/len(evaluations))
@@ -51,4 +53,4 @@ def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",
 
 if __name__=="__main__":
     learner=ucb.TrackBucketUCB()
-    print anneal([ls.linearstrat.regularlinear(5) for i in range(10)],learner,.2,.9,.001,"fullvertperturb",[4])
+    print anneal([ls.linearstrat.regularlinear(5) for i in range(10)],learner,.2,.9,.001,"fullvertperturb",[4],1000,.99,1,None,True)

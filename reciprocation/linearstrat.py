@@ -35,6 +35,8 @@ class linearstrat:
             return self.startmove
         else:
             r = bisect.bisect(self.strat, (move, 100))
+            if r==len(self.strat):
+                r=r-1
             w = (move - self.strat[r - 1][0]) / (self.strat[r][0] - self.strat[r - 1][0])
             return (1 - w) * self.strat[r - 1][1] + w * self.strat[r][1]
 
