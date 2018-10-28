@@ -1,5 +1,6 @@
 
 import KNNUCB as knn
+import reciprocation.GPUCB
 import reciprocation.UCB
 import teachingstrategies as teachers
 import learningstrategies as learners
@@ -59,7 +60,7 @@ def UCT_simple_evaluate(repetitions,iteration,discountfactor,startmove,response,
 
 
 def GPUCB_simple_evaluate(repetitions,iteration,discountfactor,startmove,response,threshhold,zero,negone):
-    learner=learners.GPUCB(startmove=startmove)
+    learner= reciprocation.GPUCB.GPUCB(startmove=startmove)
     if response is not None:
         teacher=teachers.simpleteacher(threshhold,zero,negone,override=[response])
     else:

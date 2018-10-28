@@ -1,4 +1,7 @@
 
+
+# DEPRECATED
+
 from genetic_alg import evaluate
 
 class optimizer:

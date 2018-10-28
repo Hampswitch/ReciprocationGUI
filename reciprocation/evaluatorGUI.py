@@ -8,6 +8,7 @@ import math
 import Tkinter as tk
 import ScrolledText
 import genetic_alg as ga
+import reciprocation.GPUCB
 import reciprocation.UCB as ucb
 import teachingstrategies as ts
 import learningstrategies as ls
@@ -202,7 +203,7 @@ class GPUCBSelector(tk.Frame):
 
     def getPlayer(self):
         params=self.params.getparameters()
-        self.gp=ls.GPUCB(kappa=params[0],history_window=params[1],fitfreq=params[2],minimizestarts=params[3],gpstarts=params[4],alpha=params[5])
+        self.gp= reciprocation.GPUCB.GPUCB(kappa=params[0], history_window=params[1], fitfreq=params[2], minimizestarts=params[3], gpstarts=params[4], alpha=params[5])
         return self.gp
 
     def showGP(self):
