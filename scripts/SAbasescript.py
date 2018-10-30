@@ -19,6 +19,6 @@ stepsize,stepratio,minstep,repetitions=params[p]
 for expandfactor in [2,4,8]:
     for resolution in [5,9,17]:
         for dupe in range(10):
-            print "== Expand: {} == Resolution: {} == Index: {} == Params: {} ==========================================".format(expandfactor,resolution,dupe)
+            print "== Expand: {} == Resolution: {} == Index: {} == Params: {} ==========================================".format(expandfactor,resolution,dupe,p)
             learner=ucb.TrackBucketUCB()
             print sa.anneal([ls.linearstrat.regularlinear(resolution) for i in range(10)],learner,stepsize,stepratio,minstep,"fullvertperturb",[expandfactor],1000,.99,repetitions,22)
