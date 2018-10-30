@@ -16,7 +16,7 @@ def dispfunctions(stratlist):
 
 def parseresults(filename):
     result={}
-    pat='== Expand: (\d+) == Resolution: (\d+) == Index: (\d+) =====================================================================================================\n'
+    pat='== Expand: (\d+) == Resolution: (\d+) == Index: (\d+) == Params: (\d+) ==========================================\n'
     f=open(filename,'r')
     l=f.readlines()
     for i in range(len(l)/2):
