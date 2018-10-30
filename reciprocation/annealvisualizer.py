@@ -3,6 +3,8 @@
 from matplotlib import pyplot as plt
 import re
 import ast
+import Tkinter as tk
+from evaluatorGUI import ParameterPanel
 
 def dispfunctions(stratlist):
     plt.figure(figsize=(4, 3))
@@ -25,8 +27,27 @@ def parseresults(filename):
         result[key]=value
     return result
 
+class annealdisp(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"../results/SAbaseresults.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1)])
+        self.params.pack(side=tk.TOP)
+        tk.Button(self,text="Make Plot",command=self.plotstrat).pack(side=tk.TOP)
+
+    def plotstrat(self):
+        filename,expand,resolution,index=self.params.getparameters()
+        results=parseresults(filename)
+        if index==-1:
+            stratlist=[]
+            for e,r,i in results.keys():
+                if r==resolution and e==expand:
+                    stratlist=stratlist+results[(e,r,i)]
+        else:
+            stratlist=results[(expand,resolution,index)]
+        dispfunctions(stratlist)
+
 if __name__=="__main__":
-    results=parseresults("../results/SAbaseresults.txt")
-    print results
-    print results[(2,5,2)]
-    dispfunctions(results[(2,9,0)])
+    master = tk.Tk()
+    annealdisp(master).pack(side=tk.TOP)
+    tk.mainloop()
+

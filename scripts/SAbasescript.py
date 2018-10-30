@@ -10,7 +10,7 @@ import sys
 # params : stepsize,stepratio,minstep,repetitions
 # base : .2,.9,.001,1
 
-params=[(.2,.99,.01,1)]
+params=[(.2,.99,.01,1),(.2,.997,.01,1),(.2,.99,.01,10)]
 
 p=int(sys.argv[1])
 
