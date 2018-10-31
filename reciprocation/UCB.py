@@ -260,8 +260,8 @@ class TrackBucketUCB:
             bucketlength=(self.lowerbounds+[1.0])[move[0]+1]-self.lowerbounds[move[0]]
             if len(self.buckets[move[0]])>self.splitthreshold and (self.lowerbounds+[1.0])[move[0]+1]-self.lowerbounds[move[0]]>self.minbucketsize:
                 threshold=((self.lowerbounds+[1.0])[move[0]+1]+self.lowerbounds[move[0]])/2
-                lowerbucket=[m for m in self.buckets[move[0]] if m[1]<threshold]
-                upperbucket=[m for m in self.buckets[move[0]] if m[1]>threshold]
+                lowerbucket=[m for m in self.buckets[move[0]] if m[0]<threshold]
+                upperbucket=[m for m in self.buckets[move[0]] if m[0]>threshold]
                 if len(lowerbucket)==0:
                     lowerbucket=None
                 if len(upperbucket)==0:
