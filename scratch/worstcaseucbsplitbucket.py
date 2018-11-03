@@ -85,5 +85,5 @@ def evalSplitUCB(n,learner,epsilon,threshold):
         print "Move: {} Response: {} Average: {}({})".format(move,response,total/count,count)
 
 if __name__=="__main__":
-    learner=testTrackBucketUCB(exploration=5)
-    evalSplitUCB(100000,learner,.1,.85)
+    learner=testTrackBucketUCB(bucketcount=16,exploration=1)
+    evalSplitUCB(10000,learner,.1,.85)

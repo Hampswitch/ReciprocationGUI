@@ -3,8 +3,12 @@
 from matplotlib import pyplot as plt
 import re
 import ast
+import math
 import Tkinter as tk
 from evaluatorGUI import ParameterPanel
+from reciprocation.linearstrat import linearstrat
+
+plt.ion()
 
 def dispfunctions(stratlist):
     plt.figure(figsize=(4, 3))
@@ -14,9 +18,18 @@ def dispfunctions(stratlist):
     plt.ylim(-1,1)
     plt.show()
 
+def disppayoffs(stratlist):
+    plt.figure(figsize=(4,3))
+    for strat in stratlist:
+        response=linearstrat(strat)
+        plt.plot([(x-100.0)/100.0 for x in range(201)],[response.respond((x-100.0)/100.0)+math.sqrt(1-((x-100.0)/100.0)**2) for x in range(201)])
+    plt.xlim(-1,1)
+    plt.ylim(-2,2)
+    plt.show()
+
 def parseresults(filename):
     result={}
-    pat='== Expand: (\d+) == Resolution: (\d+) == Index: (\d+) == Params: (\d+) ==========================================\n'
+    pat='== Expand: (\d+) == Resolution: (\d+) == Index: (\d+) == Params: \d+ ==========================================\n'
     f=open(filename,'r')
     l=f.readlines()
     for i in range(len(l)/2):
@@ -30,7 +43,7 @@ def parseresults(filename):
 class annealdisp(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self,master)
-        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"../results/SAbaseresults.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1)])
+        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"../results/SAparam0.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1)])
         self.params.pack(side=tk.TOP)
         tk.Button(self,text="Make Plot",command=self.plotstrat).pack(side=tk.TOP)
 
@@ -45,6 +58,7 @@ class annealdisp(tk.Frame):
         else:
             stratlist=results[(expand,resolution,index)]
         dispfunctions(stratlist)
+        disppayoffs(stratlist)
 
 if __name__=="__main__":
     master = tk.Tk()

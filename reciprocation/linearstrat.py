@@ -51,3 +51,6 @@ class linearstrat:
 
     def fullvertperturb(self,stepsize,expandfactor=2):
         return [linearstrat([(m,min(1,max(-1,r+random.normalvariate(0,stepsize)))) for (m,r) in self.strat]) for i in range(expandfactor)]
+
+    def singlevertperturb(self,stepsize,expandfactor=2):
+        return [linearstrat([(m,min(1,max(-1,r+random.normalvariate(0,stepsize if i==changepos else 0)))) for i,(m,r) in enumerate(self.strat)]) for j,changepos in [(k,random.randint()) for k in range(expandfactor)]]

@@ -10,15 +10,21 @@ import sys
 # params : stepsize,stepratio,minstep,repetitions
 # base : .2,.9,.001,1
 
-params=[(.2,.99,.01,1),(.2,.997,.01,1),(.2,.99,.01,10)]
+params=[(.2,.99,.01,1),(.2,.997,.01,1),(.2,.99,.01,10),
+        (.2, .99, .01, 10, 33, 8, "fullvertperturb", .99, 1000, 1),
+        (.2, .99, .01, 10, 17, 8, "fullvertperturb", .99, 1000, 1),
+        (.2, .99, .01, 10, 9, 8, "fullvertperturb", .99, 1000, 1),
+        (.2, .99, .01, 10, 33, 8, "singlevertperturb", .99, 1000, 1),
+        (.2, .99, .01, 10, 17, 8, "singlevertperturb", .99, 1000, 1),
+        (.2, .99, .01, 10, 9, 8, "singlevertperturb", .99, 1000, 1),]
 
 p=int(sys.argv[1])
 
-stepsize,stepratio,minstep,repetitions=params[p]
+stepsize,stepratio,minstep,repetitions,resolution,expandfactor,perturbfunc,discount,iterations,explore=params[p]
 
-for expandfactor in [2,4,8]:
-    for resolution in [5,9,17]:
-        for dupe in range(10):
-            print "== Expand: {} == Resolution: {} == Index: {} == Params: {} ==========================================".format(expandfactor,resolution,dupe,p)
-            learner=ucb.TrackBucketUCB()
-            print sa.anneal([ls.linearstrat.regularlinear(resolution) for i in range(10)],learner,stepsize,stepratio,minstep,"fullvertperturb",[expandfactor],1000,.99,repetitions,22)
+print params[p]
+
+for dupe in range(10):
+    learner=ucb.TrackBucketUCB(exploration=explore)
+    print sa.anneal([ls.linearstrat.regularlinear(resolution) for i in range(10)],learner,stepsize,stepratio,minstep,perturbfunc,
+                    [expandfactor],iterations,discount,repetitions,22)
