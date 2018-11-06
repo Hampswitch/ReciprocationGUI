@@ -40,6 +40,17 @@ def parseresults(filename):
         result[key]=value
     return result
 
+def parsesinglefile(filename):
+    result=[]
+    f=open(filename,'r')
+    l=f.readlines()[1:]
+    for i in range(len(l)):
+        value=[]
+        for s in l[i].split("Linear Strat: ")[1:]:
+            value.append(ast.literal_eval(s[:-2]))
+        result.append(value)
+    return result
+
 class annealdisp(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self,master)
@@ -49,14 +60,21 @@ class annealdisp(tk.Frame):
 
     def plotstrat(self):
         filename,expand,resolution,index=self.params.getparameters()
-        results=parseresults(filename)
-        if index==-1:
-            stratlist=[]
-            for e,r,i in results.keys():
-                if r==resolution and e==expand:
-                    stratlist=stratlist+results[(e,r,i)]
+        if filename in ["SAparam0.txt","SAparam1.txt","SAparam2.txt"]:
+            results=parseresults(filename)
+            if index==-1:
+                stratlist=[]
+                for e,r,i in results.keys():
+                    if r==resolution and e==expand:
+                        stratlist=stratlist+results[(e,r,i)]
+            else:
+                stratlist=results[(expand,resolution,index)]
         else:
-            stratlist=results[(expand,resolution,index)]
+            stratlists=parsesinglefile(filename)
+            if index==-1:
+                stratlist=[s for sl in stratlists for s in sl]
+            else:
+                stratlist=stratlists[index]
         dispfunctions(stratlist)
         disppayoffs(stratlist)
 
