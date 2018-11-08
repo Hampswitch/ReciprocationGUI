@@ -1,0 +1,8 @@
+
+Learner strategies to use for simulated annealing
+
+fastlearner - no parameters
+UCT - exploration .35, radial 1, bucketcount 2
+UCB-no split same, but splitcount=4000, explore = .125
+UCB - Track Bucket split (buckets=8, splitcount=4,explore=1,minbucketsize=.001,widthexplore=1)
+KNN - (K=4, nwidth=.4,explore=.35)
