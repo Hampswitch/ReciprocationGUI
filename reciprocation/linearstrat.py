@@ -23,6 +23,19 @@ class linearstrat:
         responses=[-1+2*random.random() for i in range(n)]
         return cls(zip(moves,responses),startmove)
 
+    @classmethod
+    def responselinear(cls,n,startmove=None):
+        """
+        This is an initializer which returns a valid response function:
+            Single peak
+        :param n:
+        :param startmove:
+        :return:
+        """
+        moves = [-1 + 2.0 * i / (n - 1) for i in range(n)]
+        responses = [-1 + 2 * random.random() for i in range(n)]
+        return cls(zip(moves, responses), startmove)
+
     def __str__(self):
         return "Linear Strat: "+str(self.strat)
 
@@ -54,3 +67,11 @@ class linearstrat:
 
     def singlevertperturb(self,stepsize,expandfactor=2):
         return [linearstrat([(m,min(1,max(-1,r+random.normalvariate(0,stepsize if i==changepos else 0)))) for i,(m,r) in enumerate(self.strat)]) for j,changepos in [(k,random.randint(0,expandfactor-1)) for k in range(expandfactor)]]
+
+    def responseperturb(self,stepsize,expandfactor=2):
+        # shift peak
+        return None
+
+
+
+

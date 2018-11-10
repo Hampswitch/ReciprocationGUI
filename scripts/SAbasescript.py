@@ -32,7 +32,8 @@ params=[(.2,.99,.01,1),(.2,.997,.01,1),(.2,.99,.01,10),
 (.2, .99, .01, 10, 33, 8, "fullvertperturb", .99, 1000, 1,2),
 (.2, .99, .01, 10, 33, 8, "fullvertperturb", .99, 1000, 1,3),
 (.2, .99, .01, 10, 33, 8, "fullvertperturb", .99, 1000, 1,4),
-(.2, .995, .01, 10, 65, 8, "fullvertperturb", .99, 1000, 1,2), #22
+(.2, .99, .01, 10, 33, 8, "fullvertperturb", .99, 1000, 1,5),
+(.2, .995, .01, 10, 65, 8, "fullvertperturb", .99, 1000, 1,2), #23
 (.2, .99, .01, 20, 65, 8, "fullvertperturb", .99, 1000, 1,2),
 (.2, .997, .01, 10, 65, 8, "fullvertperturb", .99, 1000, 1,2),
         ]
@@ -45,7 +46,8 @@ print params[p]
 
 for dupe in range(10):
     learners=[learn.fastlearner(),learn.player(learner=learn.UCTlearner(c=.35,initdata=None,bucketcount=2),radial=True),
-              ucb.TrackBucketUCB(8,explore,4,.001,widthexp=1),ucb.TrackBucketUCB(8,explore,4000,.001,widthexp=1),knnucb.KNNUCBplayer(4,.4,.35)]
+              ucb.TrackBucketUCB(8,explore,4,.001,widthexp=1),ucb.TrackBucketUCB(8,explore,4000,.001,widthexp=1),knnucb.KNNUCBplayer(4,.4,.35),
+              ucb.TrackBucketUCB(8,0,4000,.001,widthexp=1)]
     learner=learners[learner]
     print sa.anneal([ls.linearstrat.regularlinear(resolution) for i in range(10)],learner,stepsize,stepratio,minstep,perturbfunc,
                     [expandfactor],iterations,discount,repetitions,22)
