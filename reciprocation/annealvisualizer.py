@@ -1,5 +1,5 @@
 
-
+import numpy as np
 from matplotlib import pyplot as plt
 import re
 import ast
@@ -26,6 +26,40 @@ def disppayoffs(stratlist):
     plt.xlim(-1,1)
     plt.ylim(-2,2)
     plt.show()
+
+def nicedispfunctions(stratlist,title):
+    # Assumes that all strategies are structured with the same set of x-values
+    xvals=[x[0] for x in stratlist[0]]
+    yvals=[[y[1] for y in x] for x in zip(*stratlist)]
+    ymeans=[np.mean(y) for y in yvals]
+    ystd=[np.std(y) for y in yvals]
+    plt.figure(figsize=(8, 6))
+    plt.plot(xvals,ymeans)
+    plt.fill_between(xvals,[m-1.96*s for m,s in zip(ymeans,ystd)],[m+1.96*s for m,s in zip(ymeans,ystd)],alpha=.25)
+    plt.xlim(-1,1)
+    plt.ylim(-1,1)
+    plt.xlabel("Opponent Move")
+    plt.ylabel("Player Response")
+    plt.title(title)
+    plt.show()
+
+def nicedisppayoffs(stratlist,title):
+    # Assumes that all strategies are structured with the same set of x-values
+    xvals=[x[0] for x in stratlist[0]]
+    yvals=[[y[1] for y in x] for x in zip(*stratlist)]
+    ymeans=[np.mean(y) for y in yvals]
+    ystd=[np.std(y) for y in yvals]
+    ypayoffs=[y+math.sqrt(1-x*x) for x,y in zip(xvals,ymeans)]
+    plt.figure(figsize=(8, 6))
+    plt.plot(xvals,ypayoffs)
+    plt.fill_between(xvals,[m-1.96*s for m,s in zip(ypayoffs,ystd)],[m+1.96*s for m,s in zip(ypayoffs,ystd)],alpha=.25)
+    plt.xlim(-1,1)
+    plt.ylim(-1,2)
+    plt.xlabel("Opponent Move")
+    plt.ylabel("Opponent Payoff")
+    plt.title(title)
+    plt.show()
+
 
 def parseresults(filename):
     result={}
@@ -54,12 +88,12 @@ def parsesinglefile(filename):
 class annealdisp(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self,master)
-        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"../results/SAparam0.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1)])
+        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"../results/SAparam0.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1),("Strat Title",tk.StringVar,""),("Payoff Title",tk.StringVar,"")])
         self.params.pack(side=tk.TOP)
         tk.Button(self,text="Make Plot",command=self.plotstrat).pack(side=tk.TOP)
 
     def plotstrat(self):
-        filename,expand,resolution,index=self.params.getparameters()
+        filename,expand,resolution,index,strattitle,payofftitle=self.params.getparameters()
         if filename in ["SAparam0.txt","SAparam1.txt","SAparam2.txt"]:
             results=parseresults(filename)
             if index==-1:
@@ -75,8 +109,8 @@ class annealdisp(tk.Frame):
                 stratlist=[s for sl in stratlists for s in sl]
             else:
                 stratlist=stratlists[index]
-        dispfunctions(stratlist)
-        disppayoffs(stratlist)
+        nicedispfunctions(stratlist,strattitle)
+        nicedisppayoffs(stratlist,payofftitle)
 
 if __name__=="__main__":
     master = tk.Tk()
