@@ -10,39 +10,40 @@ import UCB as ucb
 
 def evalwrap(dillarglist):
     arglist=dill.loads(dillarglist)
-    result=ga.evaluate(arglist[0],arglist[1],arglist[2],arglist[3],arglist[4])
+    opponent,particle,iterations,discountfactor,repetitions,skiprounds=dill.loads(dillarglist)
+    result=ga.evaluate(opponent,particle,iterations,discountfactor,repetitions,skipfirst=arglist[5])
     if arglist[4]<2:
         return result[1]
     else:
         return result[2]
 
-def paralleleval(opponent,population,iterations,discountfactor,repetitions,processes=4):
+def paralleleval(opponent,population,iterations,discountfactor,repetitions,skiprounds,processes=4):
     pool=multiprocessing.Pool(processes=processes)
     results=[]
     for p in population:
-        results.append(pool.apply_async(evalwrap,(dill.dumps((opponent,p,iterations,discountfactor,repetitions)),)))
+        results.append(pool.apply_async(evalwrap,(dill.dumps((opponent,p,iterations,discountfactor,repetitions,skiprounds)),)))
     pool.close()
     pool.join()
     return [r.get() for r in results]
 
-def nonparalleleval(opponent,population,iterations,discountfactor,repetitions):
+def nonparalleleval(opponent,population,iterations,discountfactor,repetitions,skiprounds):
     results=[]
     for p in population:
         if repetitions<2:
-            results.append(ga.evaluate(opponent, p, iterations, discountfactor, repetitions)[1])
+            results.append(ga.evaluate(opponent, p, iterations, discountfactor, repetitions,skipfirst=skiprounds)[1])
         else:
-            results.append(ga.evaluate(opponent,p,iterations,discountfactor,repetitions)[2])
+            results.append(ga.evaluate(opponent,p,iterations,discountfactor,repetitions,skipfirst=skiprounds)[2])
     return results
 
-def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",perturbargs=[],iterations=1000,discountfactor=.99,repetitions=1,processes=4,verbose=False):
+def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",perturbargs=[],iterations=1000,discountfactor=.99,repetitions=1,processes=4,verbose=False,skiprounds=0):
     while stepsize>minstep:
         # Create potential children
         expandpop=[perturbed for member in population for perturbed in getattr(member,perturbfunc)(stepsize,*perturbargs)]
         # Evaluate potential children
         if processes is not None:
-            evaluations=paralleleval(opponent,expandpop,iterations,discountfactor,repetitions,processes)
+            evaluations=paralleleval(opponent,expandpop,iterations,discountfactor,repetitions,skiprounds,processes)
         else:
-            evaluations=nonparalleleval(opponent,expandpop,iterations,discountfactor,repetitions)
+            evaluations=nonparalleleval(opponent,expandpop,iterations,discountfactor,repetitions,skiprounds)
         if verbose:
             print stepsize
             print(sum(evaluations)/len(evaluations))

@@ -15,6 +15,7 @@ import learningstrategies as ls
 import teachinglearning as tl
 import KNNUCB as knn
 import EXP3
+import annealvisualizer
 
 class ParameterPanel(tk.Frame):
     def __init__(self,master,parameters):
@@ -70,6 +71,22 @@ class TrackUCBSelector(tk.Frame):
 
     def __str__(self):
         return "Track Bucket UCB "+str(self.params.getparameters())
+
+class LinearStratSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Linear Strategy from File").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"results/SAparam18.txt")])
+        self.params.pack(side=tk.TOP)
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        return annealvisualizer.mklinearstratfromfile(params[0])
+
+    def __str__(self):
+        params=self.params.getparameters()
+        strat=annealvisualizer.mklinearstratfromfile(params[0])
+        return "Linear Strategy "+str(self.params.getparameters())+" Best Response: "+str(strat.getbestresponse())
 
 class NoisyBucketSelector(tk.Frame):
     def __init__(self,master):
@@ -261,6 +278,7 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel, text="Balancer", command=lambda: self.setSelector(BalancerSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Noisy Bucket", command=lambda: self.setSelector(NoisyBucketSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Track UCB", command=lambda: self.setSelector(TrackUCBSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Linear Strat", command=lambda: self.setSelector(LinearStratSelector)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None

@@ -53,12 +53,12 @@ def interpolate(s1,s2,p,verbose=False):
             print "({} + sqrt({}))/{}".format(-B,B**2-4*A*C,2*A)
             print "({},{}) ({},{})".format(x1,y1,x2,y2)
         x=-1/slope
-        return x*math.sqrt(1/(1+x*x))
+        return max(min(s1[1],s2[1]),min(max(s1[1],s2[1]),x*math.sqrt(1/(1+x*x))))
     y=slope*x+intercept
     y=min(max(y1,y2),y)
     result=y-y3
-    #result=max(min(s1[1],s2[1]),result)
-    #result=min(max(s1[1],s2[1]),result)
+    result=max(min(s1[1],s2[1]),result)
+    result=min(max(s1[1],s2[1]),result)
     return result
 
 

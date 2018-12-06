@@ -5,10 +5,12 @@ import re
 import ast
 import math
 import Tkinter as tk
-from evaluatorGUI import ParameterPanel
+import evaluatorGUI
 from reciprocation.linearstrat import linearstrat
+import reciprocation.UCB as ucb
+import reciprocation.genetic_alg as ga
 
-plt.ion()
+
 
 def dispfunctions(stratlist):
     plt.figure(figsize=(4, 3))
@@ -26,6 +28,13 @@ def disppayoffs(stratlist):
     plt.xlim(-1,1)
     plt.ylim(-2,2)
     plt.show()
+
+def mklinearstratfromfile(filename):
+    stratlists=parsesinglefile(filename)
+    stratlist = [s for sl in stratlists for s in sl]
+    xvals = [x[0] for x in stratlist[0]]
+    yvals = [[y[1] for y in x] for x in zip(*stratlist)]
+    return linearstrat([(x,np.mean(y)) for x,y in zip(xvals,yvals)])
 
 def nicedispfunctions(stratlist,title):
     # Assumes that all strategies are structured with the same set of x-values
@@ -88,7 +97,7 @@ def parsesinglefile(filename):
 class annealdisp(tk.Frame):
     def __init__(self,master):
         tk.Frame.__init__(self,master)
-        self.params=ParameterPanel(self,[("Filename: ",tk.StringVar,"../results/SAparam0.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1),("Strat Title",tk.StringVar,""),("Payoff Title",tk.StringVar,"")])
+        self.params=evaluatorGUI.ParameterPanel(self,[("Filename: ",tk.StringVar,"results/SAparam0.txt"),("Expand",tk.IntVar,4),("Resolution",tk.IntVar,9),("Index",tk.IntVar,-1),("Strat Title",tk.StringVar,""),("Payoff Title",tk.StringVar,"")])
         self.params.pack(side=tk.TOP)
         tk.Button(self,text="Make Plot",command=self.plotstrat).pack(side=tk.TOP)
 
@@ -112,8 +121,85 @@ class annealdisp(tk.Frame):
         nicedispfunctions(stratlist,strattitle)
         nicedisppayoffs(stratlist,payofftitle)
 
+
+
 if __name__=="__main__":
+    plt.ion()
     master = tk.Tk()
     annealdisp(master).pack(side=tk.TOP)
     tk.mainloop()
 
+if __name__=="__dfmkdata__":
+    dflist=[.75,.9,.95,.99,.999]
+    plt.figure(figsize=(8, 6))
+    for filename in ["results/SAparam26.txt","results/SAparam27.txt","results/SAparam28.txt","results/SAparam29.txt","results/SAparam30.txt"]:
+        resultlist=[]
+        for df in dflist:
+            annealed=mklinearstratfromfile(filename)
+            opponent=ucb.TrackBucketUCB(8, 1, 4000, .001, widthexp=1)
+            result=ga.evaluate(annealed, opponent, 1000, df, 1000, 0,0,.05)
+            resultlist.append(result[0])
+        print filename
+        print resultlist
+        plt.plot(dflist,resultlist)
+    plt.xlim(.75, 1)
+    plt.ylim(0, 2)
+    plt.xlabel("Opponent Move")
+    plt.ylabel("Opponent Payoff")
+    plt.title("Performance variation by discount factor")
+    plt.show()
+
+if __name__=="__egendata__":
+    elist = [.125, .25, .5, 1.0, 2.0]
+    plt.figure(figsize=(8, 6))
+    for filename in ["results/SAparam32.txt", "results/SAparam33.txt", "results/SAparam34.txt", "results/SAparam35.txt",
+                     "results/SAparam36.txt"]:
+        resultlist = []
+        for e in elist:
+            annealed = mklinearstratfromfile(filename)
+            opponent = ucb.TrackBucketUCB(8, e, 4000, .001, widthexp=1)
+            result = ga.evaluate(annealed, opponent, 1000, .99, 1000, 0, 0, .05)
+            resultlist.append(result[0])
+        print filename
+        print resultlist
+        plt.plot(elist, resultlist)
+    plt.xlim(0, 2)
+    plt.ylim(0, 2)
+    plt.xlabel("Opponent Move")
+    plt.ylabel("Opponent Payoff")
+    plt.title("Performance variation by discount factor")
+    plt.show()
+
+if __name__=="__maindfgraph__":
+    data=[[1.0393325211712521, 1.1937296027245028, 1.307791724319006, 1.4564787728000956, 1.5078830258654985],
+          [1.0352379329553323, 1.2958337241360123, 1.480149020032179, 1.686108050664614, 1.7513679503646582],
+          [0.95759735869500762, 1.2855335401356578, 1.5296591783452127, 1.7946136717818486, 1.8794943193379046],
+          [0.82374842130867321, 1.1980437599895104, 1.4952292482120808, 1.8272824916881123, 1.9196644334665196],
+          [0.71133150391023625, 1.1059414045661433, 1.4125624426546419, 1.8010719310310705, 1.9322540263044952]]
+    dfvals=[.75,.9,.95,.99,.999]
+    for i in range(5):
+        plt.plot(dfvals,data[i])
+    plt.xlim(.75,1)
+    plt.ylim(.5,2)
+    plt.xlabel("Discount Factor")
+    plt.ylabel("Annealed Strategy Score")
+    plt.legend(["Optimized for .75","Optimized for .9","Optimized for .95"," Optimized for .99","Optimized for .999"])
+    plt.title("Performance of Strategies Annealed for Discount Factor")
+    plt.show()
+
+if __name__=="__mainegraph__":
+    data=[[1.8759148740580001, 1.8537591390906645, 1.7987996391075722, 1.7094491341858329, 1.5767176840559534],
+          [1.8705518463481683, 1.8699155320051746, 1.8335847842528639, 1.767549897836896, 1.6602560528546728],
+          [1.8598693140135647, 1.8595523306307224, 1.8572209187915969, 1.8069598047755853, 1.7281964699573853],
+          [1.8420327472955915, 1.8420400941711528, 1.8419108850714898, 1.8275248535843567, 1.7672976182391054],
+          [1.82573010990896, 1.8256811953279934, 1.8253419906076778, 1.8194700876396732, 1.7823146131017837]]
+    evals=[.125,.25,.5,1.0,2.0]
+    for i in range(5):
+        plt.plot(evals,data[i])
+    plt.xlim(0,2)
+    plt.ylim(1.5,2)
+    plt.xlabel("Opponent Exploration Parameter")
+    plt.ylabel("Annealed Strategy Score")
+    plt.legend(["Optimized for .125","Optimized for .25","Optimized for .5"," Optimized for 1.0","Optimized for 2.0"])
+    plt.title("Performance of Strategies Annealed for Exploration Parameter")
+    plt.show()
