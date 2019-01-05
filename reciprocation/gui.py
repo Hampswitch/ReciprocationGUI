@@ -5,6 +5,7 @@ import learningstrategies as ls
 import reciprocation.UCB
 import teachingstrategies as ts
 import teachinglearning as tl
+import negotiator as ng
 
 class gametracker(tk.Frame):
     def __init__(self,master,curplayer=0):
@@ -15,12 +16,13 @@ class gametracker(tk.Frame):
         displaypanel.pack(side=tk.TOP)
         self.stratselector=[None,None]
         #self.stratselector[0] = controls.ReciprocalStrategySelector(displaypanel)
-        self.stratselector[0]=controls.textlearner(displaypanel,ts.simpleteacher(.95,-.8,0))
+        self.stratselector[0]=controls.textlearner(displaypanel,ng.functionnegotiator(ng.mkstepfunc([(10,.9),(100,.707),(500,.5),(900,.1)],.001),.1))
+        #self.stratselector[0]=controls.textlearner(displaypanel,ts.simpleteacher(.95,-.8,0))
         #self.stratselector[0]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=.25))
         #self.stratselector[0] = controls.textlearner(displaypanel,ls.player("UCT", c=1, teachingstrat=ts.simpleteacher(.85, -1, -1),teachingweight=8))
         self.stratselector[0].pack(side=tk.LEFT)
 
-        self.gamedisp = controls.GameDisplay(displaypanel,discount=0)
+        self.gamedisp = controls.GameDisplay(displaypanel,discount=.01)
         self.gamedisp.pack(side=tk.LEFT)
 
         #self.stratselector[1] = controls.ReciprocalStrategySelector(displaypanel)
@@ -28,7 +30,7 @@ class gametracker(tk.Frame):
         #self.stratselector[1]=learners.BucketLearner(displaypanel,10)
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player(learner=ls.UCTlearner(c=1.0)))
         #self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.BucketUCB(splitthreshhold=1,splitval=1,bucketcount=8,minbucketsize=.001,exploration=1.0))
-        self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.TrackBucketUCB(widthexp=0,minbucketsize=.0001))
+        self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.TrackBucketUCB(widthexp=1,minbucketsize=.0001,radial=False))
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.fastlearner())
         #self.stratselector[1]=controls.textlearner(displaypanel,tl.BucketUCBTL())
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=2))

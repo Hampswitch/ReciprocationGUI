@@ -27,7 +27,7 @@ class linearstrat:
 
     @classmethod
     def biasedlinear(cls,startmove=None):
-        positions=[-1.0,-.75,-.5,-.25,0,.25,.5,.75,.875,.9375,96875,.984375,.9921875,1.0]
+        positions=[-1.0,-.75,-.5,-.25,0,.25,.5,.75,.875,.9375,.96875,.984375,.9921875,1.0]
         return cls([(m,-1+2*random.random()) for m in positions],startmove)
 
     @classmethod
@@ -113,8 +113,42 @@ class linearstrat:
         # Supposed to be a mutator that maintains the single-peaked property
         return None
 
+class slopestrat:
+    #Incorporate this into stratexplorer
+    def __init__(self,threshold):
+        self.threshold=threshold
 
+    def getDescription(self):
+        return str(self)
 
+    def getStatus(self):
+        return str(self)
+
+    def reset(self):
+        self.start = True
+
+    def respond(self,move):
+        if move is None:
+            return math.sqrt(1-self.threshold**2)
+        else:
+            if move>=self.threshold:
+                return math.sqrt(1-self.threshold**2)
+            else:
+                x=self.threshold*math.sqrt(1-move**2)-move*math.sqrt(1-self.threshold**2)
+                r=-self.threshold*x+math.sqrt(self.threshold**2*x**2-x**2-self.threshold**2+1)
+                return r
+
+    def __str__(self):
+        return "Slope Strat: "+str(self.threshold)
+
+    def __repr__(self):
+        return str(self)
+
+def testratio(move,response=None):
+    if response is None:
+        return move/math.sqrt(1-move**2)
+    else:
+        return (move+math.sqrt(1-response**2))/(response+math.sqrt(1-move**2))
 
 if __name__=="__main__":
     for i in range(10):

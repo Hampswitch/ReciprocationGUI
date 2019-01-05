@@ -7,6 +7,8 @@ import time
 import math
 import Tkinter as tk
 import ScrolledText
+import ast
+
 import genetic_alg as ga
 import reciprocation.GPUCB
 import reciprocation.UCB as ucb
@@ -16,6 +18,8 @@ import teachinglearning as tl
 import KNNUCB as knn
 import EXP3
 import annealvisualizer
+import negotiator
+import linearstrat as linstrat
 
 class ParameterPanel(tk.Frame):
     def __init__(self,master,parameters):
@@ -36,6 +40,34 @@ class ParameterPanel(tk.Frame):
     def setparam(self,index,value):
         self.vars[index].set(value)
 
+class slopeSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Slope Threshold Function").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Threshold: ",tk.DoubleVar,.707)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "Slope Threshold ({})".format(self.params.getparameters()[0])
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        return linstrat.slopestrat(params[0])
+
+class negotiatorSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Negotiator").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Thresholds: ",tk.StringVar,"[(10,.9),(100,.707),(500,.5),(900,.1)]"),("Limit",tk.DoubleVar,0.001),("Forgiveness: ",tk.DoubleVar,.1)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "Negotiator "+str(self.params.getparameters())
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        L=ast.literal_eval(params[0])
+        return negotiator.functionnegotiator(negotiator.mkstepfunc(L,params[1]),params[2])
 
 class SimpleTeacherSelector(tk.Frame):
     def __init__(self,master):
@@ -279,6 +311,8 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel, text="Noisy Bucket", command=lambda: self.setSelector(NoisyBucketSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Track UCB", command=lambda: self.setSelector(TrackUCBSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Linear Strat", command=lambda: self.setSelector(LinearStratSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Negotiator",command=lambda: self.setSelector(negotiatorSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Slope Strat",command=lambda: self.setSelector(slopeSelector)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None

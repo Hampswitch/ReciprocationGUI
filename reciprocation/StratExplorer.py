@@ -6,6 +6,8 @@ import teachinglearning
 import tkdict
 import pandas
 import meshutils
+import linearstrat
+
 
 def toCanvas(x,y,size=200,scale=2):
     return (size*.5+5+x*size*.25,size*.5+5-y*size*.25)
@@ -19,7 +21,7 @@ def checkbounds(p):
     return (x,y)
 
 class functioncontrol(tk.Frame):
-    def __init__(self,master,pointlist=None,command=None,simpleteachercontrol=False,meshcontrol=False):
+    def __init__(self,master,pointlist=None,command=None,loadbuttons=False):
         tk.Frame.__init__(self,master)
         self.displaycanvas=tk.Canvas(self, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
         self.displaycanvas.pack(side=tk.TOP)
@@ -34,64 +36,99 @@ class functioncontrol(tk.Frame):
         self.displaycanvas.create_line(5,55,205,55,fill="light grey")
         self.displaycanvas.create_line(5,105,205,105,fill="grey")
         self.displaycanvas.create_line(5,155,205,155,fill="light grey")
-        if simpleteachercontrol:
-            self.threshholdvar=tk.DoubleVar()
-            self.threshholdvar.set(.707)
-            self.zerovar=tk.DoubleVar()
-            self.negonevar=tk.DoubleVar()
-            self.resolutionvar=tk.IntVar()
-            self.resolutionvar.set(10)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Threshhold:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.threshholdvar).pack(side=tk.LEFT)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Zero Response:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.zerovar).pack(side=tk.LEFT)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Negative One Response:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.negonevar).pack(side=tk.LEFT)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
-            tk.Button(self,text="Set Strategy",command=self.setpointlist).pack(side=tk.TOP)
-        if meshcontrol:
-            self.resolutionvar=tk.IntVar()
-            self.resolutionvar.set(10)
-            self.filenamevar=tk.StringVar()
-            self.filenamevar.set("results/griditerator0.csv")
-            self.scorevar=tk.StringVar()
-            self.scorevar.set("score")
-            self.scalevar=tk.DoubleVar()
-            self.scalevar.set(.01)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Filename:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.filenamevar).pack(side=tk.LEFT)
-            frame = tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Score:").pack(side=tk.LEFT)
-            tk.Entry(frame, textvariable=self.scorevar).pack(side=tk.LEFT)
-            frame=tk.Frame(self)
-            frame.pack(side=tk.TOP)
-            tk.Label(frame, text="Correct:").pack(side=tk.LEFT)
-            tk.Entry(frame,textvariable=self.scalevar).pack(side=tk.LEFT)
-            self.fixedvars=tkdict.tkdict(self)
-            self.fixedvars.pack(side=tk.TOP)
-            tk.Button(self,text="Set Strategy",command=self.setmesh).pack(side=tk.TOP)
+        if loadbuttons==True:
+            buttonframe=tk.Frame(self)
+            buttonframe.pack(side=tk.TOP)
+            tk.Button(buttonframe,text="Mesh",command=self.setcontrolgridfunc).pack(side=tk.LEFT)
+            tk.Button(buttonframe,text="Simple",command=self.setcontrolsimple).pack(side=tk.LEFT)
+            tk.Button(buttonframe,text="Slope",command=self.setcontrolslopefunc).pack(side=tk.LEFT)
+            tk.Button(buttonframe,text="Linear",command=self.setcontrollinearstrat).pack(side=tk.LEFT)
+            self.controlframe=tk.Frame(self)
+            self.controlframe.pack(side=tk.TOP)
         self.pointlist=pointlist
         if self.pointlist is None:
             self.pointlist=[]
         self.command=command
         self.__drawpointlist(self.pointlist,False)
         self.dragging=False
+
+    def setcontrolsimple(self):
+        self.threshholdvar = tk.DoubleVar()
+        self.threshholdvar.set(.707)
+        self.zerovar = tk.DoubleVar()
+        self.negonevar = tk.DoubleVar()
+        self.resolutionvar = tk.IntVar()
+        self.resolutionvar.set(10)
+        for widget in self.controlframe.winfo_children():
+            widget.destroy()
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Threshhold:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.threshholdvar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Zero Response:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.zerovar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Negative One Response:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.negonevar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
+        tk.Button(self.controlframe, text="Set Strategy", command=self.setpointlist).pack(side=tk.TOP)
+
+    def setcontrolgridfunc(self):
+        self.resolutionvar = tk.IntVar()
+        self.resolutionvar.set(10)
+        self.filenamevar = tk.StringVar()
+        self.filenamevar.set("results/griditerator0.csv")
+        self.scorevar = tk.StringVar()
+        self.scorevar.set("score")
+        self.scalevar = tk.DoubleVar()
+        self.scalevar.set(.01)
+        for widget in self.controlframe.winfo_children():
+            widget.destroy()
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Filename:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.filenamevar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Score:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.scorevar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Correct:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.scalevar).pack(side=tk.LEFT)
+        self.fixedvars = tkdict.tkdict(self)
+        self.fixedvars.pack(side=tk.TOP)
+        tk.Button(self, text="Set Strategy", command=self.setmesh).pack(side=tk.TOP)
+
+    def setcontrollinearstrat(self):
+        pass
+
+    def setcontrolslopefunc(self):
+        self.threshholdvar = tk.DoubleVar()
+        self.threshholdvar.set(.707)
+        self.resolutionvar = tk.IntVar()
+        self.resolutionvar.set(10)
+        for widget in self.controlframe.winfo_children():
+            widget.destroy()
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Threshhold:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.threshholdvar).pack(side=tk.LEFT)
+        frame = tk.Frame(self.controlframe)
+        frame.pack(side=tk.TOP)
+        tk.Label(frame, text="Resolution:").pack(side=tk.LEFT)
+        tk.Entry(frame, textvariable=self.resolutionvar).pack(side=tk.LEFT)
+        tk.Button(self.controlframe, text="Set Strategy", command=self.setslopestrat).pack(side=tk.TOP)
 
     def setpointlist(self):
         try:
@@ -100,6 +137,13 @@ class functioncontrol(tk.Frame):
             t=self.threshholdvar.get()
             self.zerovar.set(2*math.sqrt(1-t*t)-1.01)
             strat = teachingstrategies.simpleteacher(self.threshholdvar.get(), self.zerovar.get(), self.negonevar.get())
+        resolution=self.resolutionvar.get()
+        x=(resolution-1)/2.0
+        self.pointlist=[(2*(i-x)/x,2*strat.respond((i-x)/x)) for i in range(resolution)]
+        self.__drawpointlist(self.pointlist)
+
+    def setslopestrat(self):
+        strat=linearstrat.slopestrat(self.threshholdvar.get())
         resolution=self.resolutionvar.get()
         x=(resolution-1)/2.0
         self.pointlist=[(2*(i-x)/x,2*strat.respond((i-x)/x)) for i in range(resolution)]
@@ -200,7 +244,7 @@ class giftDisplay(tk.Frame):
         frame.pack(side=tk.TOP)
         tk.Label(self,text="Response Function").pack(side=tk.TOP)
         self.strat=teachingstrategies.simpleteacher(.95,-1,-1)
-        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],simpleteachercontrol=True,meshcontrol=True)
+        self.stratcontrol=functioncontrol(frame,pointlist=[(i/20.0,2*self.strat.respond(i/40.0)) for i in range(-40,42,2)],loadbuttons=True)
         self.stratcontrol.pack(side=tk.LEFT)
         self.funccanvas = tk.Canvas(frame, width=210, height=210, borderwidth=1, relief=tk.RAISED, background="white")
         self.funccanvas.pack(side=tk.LEFT)

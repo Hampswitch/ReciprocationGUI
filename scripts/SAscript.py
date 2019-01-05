@@ -39,8 +39,8 @@ combinedparams=[(0,0,0,0),
                 (0,0,0,1),
                 (0,0,3,3),
                 (0,0,4,3),
-                (0,0,0,4),
-                (0,4,0,4),
+                (0,0,0,4), # bugged
+                (0,4,0,4), # bugged
                 (0,1,0,0),
                 (0,2,0,0),
                 (0,3,0,0),
@@ -86,12 +86,11 @@ def getparticleparams(index):
 
 
 
-#c=int(sys.argv[1])
-c=1
+c=int(sys.argv[1])
 
 o,e,a,p=combinedparams[c]
 
-print (opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
+print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
 
 opponent=getopponent(o)
 
@@ -101,4 +100,4 @@ for dupe in range(10):
     stepsize,stepratio,minstep,repetitions=getannealparams(a)
     discount,iterations,skiprounds=getevalparams(e)
     print sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
-                    perturbargs,iterations,discount,repetitions,22,skiprounds=skiprounds,verbose=True)
+                    perturbargs,iterations,discount,repetitions,22,skiprounds=skiprounds,verbose=False)
