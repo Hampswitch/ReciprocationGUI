@@ -20,7 +20,7 @@ class distplayer:
         return str(self)
 
     def reset(self):
-        self.curplayer=numpy.random.choice(self.playerlist,1,p=self.weights)
+        self.curplayer=numpy.random.choice(self.playerlist,1,p=self.weights)[0]
         self.curplayer.reset()
 
     def respond(self,move):
