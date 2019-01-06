@@ -5,20 +5,26 @@ import reciprocation.linearstrat as ls
 import sys
 import reciprocation.learningstrategies as learn
 import reciprocation.KNNUCB as knnucb
+import reciprocation.negotiator as negot
+import reciprocation.distplayer as distplayer
 
 # params : stepsize,stepratio,minstep,repetitions
 # base : .2,.9,.001,1
 
 # learnertype, explore
 opponentparams=[("UCBsplit",1.0),
-                ("UCBsplit",.125)]
+                ("UCBsplit",.125),
+                ("MixedDist1",),
+                ("MixedDist2",),
+                ("MixedDist3",)]
 
 # discount, iterations, skiprounds
 evaluationparams=[(.99,1000,0),
                   (.99,1000,10),
                   (.99,1000,50),
                   (1.0,1000,10),
-                  (1.0,1000,50)]
+                  (1.0,1000,50),
+                  (1.0,1000,0)]
 
 # stepsize,stepratio,minstep,repetitions
 annealparams=[(.2,.99,.01,10),
@@ -32,7 +38,8 @@ particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
                 ((10, "regularlinear", 17), "fullperturb", (8,)),
                 ((10,"regularlinear",65),"fullvertperturb",(8,)),
                 ((10,"regularlinear",129),"fullvertperturb",(8,)),
-                ((10,"biasedlinear"),"fullvertperturb",(8,))]
+                ((10,"biasedlinear"),"fullvertperturb",(8,)),
+                ((10,"seqslope"),"fullpermute",(8,))]
 
 # opponent,eval,anneal,particle
 combinedparams=[(0,0,0,0),
@@ -44,7 +51,10 @@ combinedparams=[(0,0,0,0),
                 (0,1,0,0),
                 (0,2,0,0),
                 (0,3,0,0),
-                (0,4,0,0)]
+                (0,4,0,0),
+                (2,5,0,5), # 10
+                (3,5,0,5),
+                (4,5,0,5)]
 
 def getopponent(index):
     if opponentparams[index][0]=="fastlearner":
@@ -59,6 +69,14 @@ def getopponent(index):
         return knnucb.KNNUCBplayer(4, .4, .35)
     elif opponentparams[index][0]=="Simple":
         return ucb.TrackBucketUCB(8, 0, 4000, .001, widthexp=1)
+    elif opponentparams[index][0]=="MixedDist1":
+        return  distplayer.distplayer([ucb.TrackBucketUCB(8, 1.0, 4, .001, widthexp=1),ls.slopestrat(.8)],[.5,.5])
+    elif opponentparams[index][0]=="MixedDist2":
+        return distplayer.distplayer([ls.slopestrat(.9),ls.slopestrat(.5)], [.5, .5])
+    elif opponentparams[index][0]=="MixedDist3":
+        return distplayer.distplayer([ls.slopestrat(.8),negot.stepannealer([(.8,5),(.5,100)])], [.5, .5])
+    else:
+        raise ValueError("Unrecognized Opponent Type: "+opponentparams[index][0])
 
 
 
@@ -81,6 +99,8 @@ def getparticleparams(index):
         return ([ls.linearstrat.regularlinear(particle[2]) for i in range(particle[0])],perturbfunc,perturbargs)
     elif particle[1]=="biasedlinear":
         return ([ls.linearstrat.biasedlinear() for i in range(particle[0])],perturbfunc,perturbargs)
+    elif particle[1]=="seqslope":
+        return ([negot.stepannealer() for i in range(particle[0])],perturbfunc,perturbargs)
     else:
         raise ValueError("Unrecognized particle type: "+str(particle[1]))
 
