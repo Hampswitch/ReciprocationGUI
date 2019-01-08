@@ -67,7 +67,7 @@ class stepannealer:
         self.opponentloss=0.0
 
     def __str__(self):
-        return "functionnegotiator ({},{:.4})".format(self.round,self.opponentloss)
+        return "StepAnnealer {} {} ({},{:.4})".format(self.forgive,self.backuplist,self.round,self.opponentloss)
 
     def __repr__(self):
         return str(self)
@@ -94,7 +94,19 @@ class stepannealer:
                 result=math.sqrt(1-threshold**2)
             else:
                 x=threshold*math.sqrt(1-forgivenmove**2)-forgivenmove*math.sqrt(1-threshold**2)
-                result=-threshold*x+math.sqrt(threshold**2*x**2-x**2-threshold**2+1)
+                try:
+                    if threshold**2*x**2-x**2-threshold**2+1<0:
+                        result=-threshold*x
+                    else:
+                        result=-threshold*x+math.sqrt(threshold**2*x**2-x**2-threshold**2+1)
+                except ValueError:
+                    print "x:"+str(x)
+                    print "threshold: "+str(threshold)
+                    print "forgivenmove: "+str(forgivenmove)
+                    print math.sqrt(1-forgivenmove**2)
+                    print self.steplist
+                    print self.round
+                    raise
             self.opponentloss=self.opponentloss+2*math.sqrt(1-threshold**2)-math.sqrt(1-forgivenmove**2)-result
             while self.opponentloss>self.steplist[0][1] and len(self.steplist)>1:
                 self.opponentloss=self.opponentloss-self.steplist[0][1]
@@ -102,10 +114,10 @@ class stepannealer:
             return result
 
     def horizontalpermute(self,stepsize,expandfactor=8):
-        return [stepannealer([(t,durationpermute(o,stepsize)) for t,o in self.steplist],boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
+        return [stepannealer([(t,durationpermute(o,stepsize)) for t,o in self.backuplist],boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
 
     def verticalpermute(self,stepsize,expandfactor=8):
-        return [stepannealer(sorted([(boundedpermute(t,stepsize),o) for t,o in self.steplist]),boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
+        return [stepannealer(sorted([(boundedpermute(t,stepsize),o) for t,o in self.backuplist],reverse=True),boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
 
     def fullpermute(self,stepsize,expandfactor=8):
-        return [stepannealer(sorted([(boundedpermute(t,stepsize),durationpermute(o,stepsize)) for t,o in self.steplist]),boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
+        return [stepannealer(sorted([(boundedpermute(t,stepsize),durationpermute(o,stepsize)) for t,o in self.backuplist],reverse=True),boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
