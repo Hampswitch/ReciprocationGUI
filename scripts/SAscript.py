@@ -16,7 +16,22 @@ opponentparams=[("UCBsplit",1.0),
                 ("UCBsplit",.125),
                 ("MixedDist1",),
                 ("MixedDist2",),
-                ("MixedDist3",)]
+                ("MixedDist3",),
+                ("LearnerThresholdMix",1.0,.8,.5), #5
+                ("LearnerThresholdMix",1.0,.8,.1),
+                ("LearnerThresholdMix",1.0,.8,.9),
+                ("LearnerThresholdMix",.125,.8,.5),
+                ("LearnerThresholdMix",1.0,.5,.5),
+                ("LearnerThresholdMix",1.0,.95,.5),
+                ("ThresholdThresholdMix",.9,.5,.5),
+                ("ThresholdThresholdMix",.9,.5,.9),
+                ("ThresholdThresholdMix",.9,.5,.1),
+                ("StubbornMix",.8,.5,.5,5), #14
+                ("StubbornMix",.8,.5,.5,2),
+                ("StubbornMix",.95,.5,.5,5),
+                ("StubbornMix",.6,.5,.5,5),
+                ("StubbornMix",.8,.5,.1,5),
+                ("StubbornMix",.8,.5,.9,5)]
 
 # discount, iterations, skiprounds
 evaluationparams=[(.99,1000,0),
@@ -54,7 +69,40 @@ combinedparams=[(0,0,0,0),
                 (0,4,0,0),
                 (2,5,0,5), # 10
                 (3,5,0,5),
-                (4,5,0,5)]
+                (4,5,0,5),
+                (2,0,0,5),
+                (3,0,0,5),
+                (4,0,0,5),
+                (5, 5, 0, 5),
+                (6, 5, 0, 5),
+                (7, 5, 0, 5),
+                (8, 5, 0, 5),
+                (9, 5, 0, 5), #20
+                (10, 5, 0, 5),
+                (11, 5, 0, 5),
+                (12, 5, 0, 5),
+                (13, 5, 0, 5),
+                (14, 5, 0, 5),
+                (15, 5, 0, 5),
+                (16, 5, 0, 5),
+                (17, 5, 0, 5),
+                (18, 5, 0, 5),
+                (19, 5, 0, 5), #30
+                (5,0,0,5),
+                (6,0,0,5),
+                (7,0,0,5),
+                (8,0,0,5),
+                (9,0,0,5),
+                (10,0,0,5),
+                (11,0,0,5),
+                (12,0,0,5),
+                (13,0,0,5),
+                (14,0,0,5), #40
+                (15,0,0,5),
+                (16,0,0,5),
+                (17,0,0,5),
+                (18,0,0,5),
+                (19,0,0,5)]
 
 def getopponent(index):
     if opponentparams[index][0]=="fastlearner":
@@ -75,6 +123,12 @@ def getopponent(index):
         return distplayer.distplayer([ls.slopestrat(.9),ls.slopestrat(.5)], [.5, .5])
     elif opponentparams[index][0]=="MixedDist3":
         return distplayer.distplayer([ls.slopestrat(.8),negot.stepannealer([(.8,5),(.5,100)])], [.5, .5])
+    elif opponentparams[index][0]=="LearnerThresholdMix":
+        return distplayer.distplayer([ucb.TrackBucketUCB(8, opponentparams[index][1], 4, .001, widthexp=1),ls.slopestrat(opponentparams[index][2])],[opponentparams[index][3],1.0-opponentparams[index][3]])
+    elif opponentparams[index][0]=="ThresholdThresholdMix":
+        distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), ls.slopestrat(opponentparams[index][2])], [opponentparams[index][3],1.0-opponentparams[index][3]])
+    elif opponentparams[index][0]=="StubbornMix":
+        return distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), negot.stepannealer([(opponentparams[index][1], opponentparams[index][4]), (opponentparams[index][2], 100)])], [opponentparams[index][3],1.0-opponentparams[index][3]])
     else:
         raise ValueError("Unrecognized Opponent Type: "+opponentparams[index][0])
 
