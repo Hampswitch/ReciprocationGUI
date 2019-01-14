@@ -126,7 +126,7 @@ def getopponent(index):
     elif opponentparams[index][0]=="LearnerThresholdMix":
         return distplayer.distplayer([ucb.TrackBucketUCB(8, opponentparams[index][1], 4, .001, widthexp=1),ls.slopestrat(opponentparams[index][2])],[opponentparams[index][3],1.0-opponentparams[index][3]])
     elif opponentparams[index][0]=="ThresholdThresholdMix":
-        distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), ls.slopestrat(opponentparams[index][2])], [opponentparams[index][3],1.0-opponentparams[index][3]])
+        return distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), ls.slopestrat(opponentparams[index][2])], [opponentparams[index][3],1.0-opponentparams[index][3]])
     elif opponentparams[index][0]=="StubbornMix":
         return distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), negot.stepannealer([(opponentparams[index][1], opponentparams[index][4]), (opponentparams[index][2], 100)])], [opponentparams[index][3],1.0-opponentparams[index][3]])
     else:
@@ -159,19 +159,19 @@ def getparticleparams(index):
         raise ValueError("Unrecognized particle type: "+str(particle[1]))
 
 
+if __name__=="__main__":
+    c=int(sys.argv[1])
 
-c=int(sys.argv[1])
+    o,e,a,p=combinedparams[c]
 
-o,e,a,p=combinedparams[c]
+    print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
 
-print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
-
-opponent=getopponent(o)
+    opponent=getopponent(o)
 
 
-for dupe in range(10):
-    particles,perturbfunc,perturbargs=getparticleparams(p)
-    stepsize,stepratio,minstep,repetitions=getannealparams(a)
-    discount,iterations,skiprounds=getevalparams(e)
-    print sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
+    for dupe in range(10):
+        particles,perturbfunc,perturbargs=getparticleparams(p)
+        stepsize,stepratio,minstep,repetitions=getannealparams(a)
+        discount,iterations,skiprounds=getevalparams(e)
+        print sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
                     perturbargs,iterations,discount,repetitions,22,skiprounds=skiprounds,verbose=False)
