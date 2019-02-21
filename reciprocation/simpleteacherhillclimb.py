@@ -5,6 +5,7 @@ import multiprocessing
 import UCB
 import genetic_alg as ga
 import learningstrategies as ls
+import reciprocation.evaluation
 import teachingstrategies as ts
 
 steps=[(1,0,0),(0,1,0),(0,0,1),(-1,0,0),(0,-1,0),(0,0,-1)]
@@ -35,7 +36,7 @@ def UCBparalleleval(t,z,n):
     discountfactor=.99
     teacher=ts.simpleteacher(t,z,n,correctparams=True)
     learner=UCB.BucketUCB(bucketcount=8,splitthreshhold=1,splitval=1,minbucketsize=.001,maxbuckets=None,radial=True,exploration=1.0)
-    result=ga.evaluate(teacher,learner,iterations,discountfactor,1)
+    result= reciprocation.evaluation.evaluate(teacher, learner, iterations, discountfactor, 1)
     return result[0]
 
 # FUTURE WORK:  Possible speed enhancement by wrapping this function into the calling function
@@ -71,7 +72,7 @@ def hillclimb(learner,startthresh,startzero,startnegone,iterations=1000,discount
     curparams=(startthresh,startzero,startnegone)
     while stepsize>.001:
         testparams=[step(curparams,d,stepsize) for d in allsteps]
-        results=[(ga.evaluate(learner,ts.simpleteacher(p[0],p[1],p[2],correctparams=True),iterations,discountfactor,repetitions)[2],i) for p,i in zip(testparams,range(len(testparams)))]
+        results=[(reciprocation.evaluation.evaluate(learner, ts.simpleteacher(p[0], p[1], p[2], correctparams=True), iterations, discountfactor, repetitions)[2], i) for p, i in zip(testparams, range(len(testparams)))]
         i=max(results)[1]
         print "{} Score: {} Choice: {} Stepsize: {}".format(str(testparams[i]),results[i][0],i,stepsize)
         curparams=testparams[i]

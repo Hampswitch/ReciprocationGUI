@@ -108,6 +108,12 @@ class bucketnoiseteacher:
             self.lowerbounds[bucket + 1:bucket + 1] = [(self.lowerbounds[bucket] + (self.lowerbounds + [1.0])[bucket + 1]) / 2.0]
         return result
 
+class randomplayer:
+    def __init__(self):
+        pass
+
+    
+
 class simpleteacher:
     def __init__(self,threshhold=None,zeroresponse=None,negoneresponse=None,startmove=None,override=[],correctparams=False):
         if threshhold is None:

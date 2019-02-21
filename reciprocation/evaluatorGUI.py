@@ -12,14 +12,16 @@ import ast
 import genetic_alg as ga
 import reciprocation.GPUCB
 import reciprocation.UCB as ucb
+import reciprocation.evaluation
 import teachingstrategies as ts
 import learningstrategies as ls
 import teachinglearning as tl
 import KNNUCB as knn
 import EXP3
 import annealvisualizer
-import negotiator
+import seqstrat
 import linearstrat as linstrat
+import discretegame as discrete
 
 class ParameterPanel(tk.Frame):
     def __init__(self,master,parameters):
@@ -39,6 +41,53 @@ class ParameterPanel(tk.Frame):
 
     def setparam(self,index,value):
         self.vars[index].set(value)
+
+class discreteUCBSelector(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Discrete UCB").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Moves",tk.IntVar,8),("Player",tk.IntVar,0),("Explore",tk.DoubleVar,1.0)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "Discrete UCB ({})".format(self.params.getparameters())
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        return discrete.discreteucb(discrete.getdiscretemoves(params[0]),params[1],params[2])
+
+class discreteteacher(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Discrete Teacher").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Values",tk.StringVar,"[-1.0,-.707,0,.707,1.0]"),("Strat",tk.StringVar,"[2,1,0,0,3]"),("Player",tk.IntVar,0)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "Discrete Teacher ({})".format(self.params.getparameters())
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        values=ast.literal_eval(params[0])
+        strat=ast.literal_eval(params[1])
+        return discrete.discreteteacher(values=values,strat=strat,player=params[2])
+
+
+class discreterandomteacher(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Discrete Random Teacher").pack(side=tk.TOP)
+        self.params=ParameterPanel(self,[("Values",tk.StringVar,"[-1.0,-.707,0.0,.707,1.0]"),("Strat",tk.StringVar,"[2,1,0,0,2.5]"),("Player",tk.IntVar,0)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "Discrete Random Teacher ({})".format(self.params.getparameters())
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        values=ast.literal_eval(params[0])
+        strat=ast.literal_eval(params[1])
+        return discrete.randomizingteacher(values=values,strat=strat,player=params[2])
 
 class slopeSelector(tk.Frame):
     def __init__(self,master):
@@ -67,7 +116,7 @@ class negotiatorSelector(tk.Frame):
     def getPlayer(self):
         params=self.params.getparameters()
         L=ast.literal_eval(params[0])
-        return negotiator.functionnegotiator(negotiator.mkstepfunc(L,params[1]),params[2])
+        return seqstrat.functionnegotiator(seqstrat.mkstepfunc(L, params[1]), params[2])
 
 class SimpleTeacherSelector(tk.Frame):
     def __init__(self,master):
@@ -312,7 +361,10 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel, text="Track UCB", command=lambda: self.setSelector(TrackUCBSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Linear Strat", command=lambda: self.setSelector(LinearStratSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Negotiator",command=lambda: self.setSelector(negotiatorSelector)).pack(side=tk.TOP)
-        tk.Button(buttonpanel, text="Slope Strat",command=lambda: self.setSelector(slopeSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Slope Strat", command=lambda: self.setSelector(slopeSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Discrete UCB", command=lambda: self.setSelector(discreteUCBSelector)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Discrete Teacher", command=lambda: self.setSelector(discreteteacher)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Discrete Random Teacher", command=lambda: self.setSelector(discreterandomteacher)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None
@@ -439,7 +491,7 @@ class EvaluatorGUI(tk.Frame):
         strat1=self.player1.getPlayer()
         strat2=self.player2.getPlayer()
         start=time.time()
-        result=ga.evaluate(strat1,strat2,self.runlengthVar.get(),self.discountfactorVar.get(),self.repetitionVar.get(),self.actionnoiseVar.get(),self.signalnoiseVar.get(),alpha=1-self.confintVar.get())
+        result= reciprocation.evaluation.evaluate(strat1, strat2, self.runlengthVar.get(), self.discountfactorVar.get(), self.repetitionVar.get(), self.actionnoiseVar.get(), self.signalnoiseVar.get(), alpha=1 - self.confintVar.get())
         stop=time.time()
         self.log.insert(tk.END,"Left Player: {0:5.4f}({1:5.4f}) ({4:5.4f}-{5:5.4f})\n     Right Player: {2:5.4f}({3:5.4f}) ({6:5.4f}-{7:5.4f})\n".format(result[0],result[1],result[2],result[3],result[4][0],result[4][1],result[5][0],result[5][1]))
         self.log.insert(tk.END,"Time taken: "+str(stop-start)+"\n")

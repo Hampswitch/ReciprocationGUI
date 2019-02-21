@@ -1,7 +1,7 @@
 """
 This script exists to explore the effect of noise on the performance of teaching strategies and learning strategies
 """
-
+import reciprocation.evaluation
 import reciprocation.teachingstrategies as ts
 import reciprocation.UCB as UCB
 import reciprocation.genetic_alg as ga
@@ -24,7 +24,7 @@ for opp in range(len(opplist)):
         lline=str(exploration)
         for noise in [.5,.25,.125,.0625,.03125,0]:
             print (exploration,noise)
-            result=ga.evaluate(opplist[opp],learner,1000,.99,100,0.0,noise)
+            result= reciprocation.evaluation.evaluate(opplist[opp], learner, 1000, .99, 100, 0.0, noise)
             tline=tline+","+str(result[0])
             lline=lline+","+str(result[2])
         lfile.write(lline+"\n")

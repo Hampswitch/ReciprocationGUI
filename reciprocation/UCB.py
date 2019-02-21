@@ -201,7 +201,7 @@ class BucketUCB:
 
 
 
-
+# IDEA for efficiency improvement - store the data in each bucket in sorted order - this will allow splitting buckets to happen more efficiently
 class TrackBucketUCB:
     def __init__(self, bucketcount=8, exploration=1.0, splitthreshold=4, minbucketsize=1e-6, startmove=None, radial=True, widthexp=.5):
         self.startmove=startmove

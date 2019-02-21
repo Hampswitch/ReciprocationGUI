@@ -1,9 +1,16 @@
-
+import ast
 import math
 import random
 
 def mkstepfunc(L,limit=0):
     return lambda x: ([response for maxval,response in L if maxval>x]+[limit])[0]
+
+def funcfromfile(filename,index,steps=4):
+    result,forgivenessresult=parsefile(filename)
+    thresholdlist=zip(*(result[index]))
+    steps=[sum([m[0] for m in l])/len(l) for l in thresholdlist]
+    loss=[sum([m[1] for m in l])/len(l) for l in thresholdlist]
+    return mkstepfunc(zip(steps,loss),limit=0),sum(forgivenessresult[index])/len(forgivenessresult),zip(steps,loss)
 
 class functionnegotiator:
     def __init__(self,func,forgive):
@@ -121,3 +128,36 @@ class stepannealer:
 
     def fullpermute(self,stepsize,expandfactor=8):
         return [stepannealer(sorted([(boundedpermute(t,stepsize),durationpermute(o,stepsize)) for t,o in self.backuplist],reverse=True),boundedpermute(self.forgive,stepsize)) for i in range(expandfactor)]
+
+
+def parsefile(filename):
+    """
+    Parse a file to extract the step functions, then report an aggregate of them all
+    :param filename:
+    :return: list of step functions
+    """
+    result=[]
+    forgivenessresult=[]
+    f=open(filename,"r")
+    lines=f.readlines()[1:]
+    f.close()
+    for line in lines:
+        result.append([ast.literal_eval("["+sa.split("[")[1].split("]")[0]+"]") for sa in line.split('StepAnnealer')[1:]])
+        forgivenessresult.append([ast.literal_eval(sa.split("[")[0].strip()) for sa in line.split("StepAnnealer")[1:]])
+    return result,forgivenessresult
+
+
+def getthreshold(steps,totalloss):
+    while totalloss>steps[0][1] and len(steps)>1:
+        totalloss=totalloss-steps[0][1]
+        steps=steps[1:]
+    return steps[0][0]
+
+
+def aggfuncs(funclist,maxtotalloss=20,interval=.1):
+    loss=0.0
+    result=[]
+    while loss<maxtotalloss:
+        result.append([getthreshold(f,loss) for p in funclist for f in p])
+        loss=loss+interval
+    return result

@@ -13,7 +13,7 @@ def nicedispfunctions(stratlist,title):
     # Assumes that all strategies are structured with the same set of x-values
     xvals=[x[0] for x in stratlist]
     yvals=[y[1] for y in stratlist]
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 4.5))
     plt.plot(xvals,yvals)
     plt.xlim(-1,1)
     plt.ylim(-1,1)
@@ -27,7 +27,7 @@ def nicedisppayoffs(stratlist,title):
     xvals=[x[0] for x in stratlist]
     yvals=[y[1] for y in stratlist]
     ypayoffs=[y+math.sqrt(1-x*x) for x,y in zip(xvals,yvals)]
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(6, 4.5))
     plt.plot(xvals,ypayoffs)
     plt.xlim(-1,1)
     plt.ylim(-1,2)
@@ -41,16 +41,22 @@ def nicedisprewards(stratlist,title):
     xvals=[x[0] for x in stratlist]
     yvals=[y[1] for y in stratlist]
     xpayoffs=[x+math.sqrt(1-y*y) for x,y in zip(xvals,yvals)]
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(4, 3))
     plt.plot(xvals,xpayoffs)
     plt.xlim(-1,1)
     plt.ylim(-1,2)
     plt.xlabel("Opponent Move")
-    plt.ylabel("Opponent Payoff")
+    plt.ylabel("Player Payoff")
     plt.title(title)
     plt.show()
 
-opponent=ls.slopestrat(.707)
-nicedispfunctions(mkstratlist(opponent),"Greedy Strategy")
-nicedisppayoffs(mkstratlist(opponent),"Greedy Strategy Payoffs")
-nicedisprewards(mkstratlist(opponent),"")
+plt.ion()
+
+for threshold in [.9]:
+    opponent=ls.slopestrat(threshold)
+    name=str(int(threshold*1000))
+    nicedispfunctions(mkstratlist(opponent),"{:.3f} Threshold Function".format(threshold))
+    plt.savefig("../graphs/TH"+name+"func.png",format="png")
+    nicedisppayoffs(mkstratlist(opponent),"Payoffs vs. {:.3f} Threshold Function".format(threshold))
+    plt.savefig("../graphs/TH"+name+"payoff.png",format="png")
+    #nicedisprewards(mkstratlist(opponent),"")

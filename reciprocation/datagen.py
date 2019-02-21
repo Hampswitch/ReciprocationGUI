@@ -1,4 +1,5 @@
 import learningstrategies as learners
+import reciprocation.evaluation
 import teachingstrategies as teachers
 import genetic_alg as ga
 
@@ -106,7 +107,7 @@ def datagen_evaluate(p1class,p1params,p2class,p2params,discountfactors,iteration
                 for p2params in itertools.product(p2params):
                     p1=p1class(*getargs(p1params))
                     p2=p2class(*getargs(p2params))
-                    result=ga.evaluate(p1,p2,iterations,discountfactor)
+                    result= reciprocation.evaluation.evaluate(p1, p2, iterations, discountfactor)
                     f.write(",".join(getvalues(p1params)+getvalues(p2params)+[str(discountfactor),str(iterations),str(result[0]),str(result[2])])+"\n")
     f.close()
 
@@ -134,7 +135,7 @@ if __name__=="__maain__":
                     for initresponse in [-x for x in rvals[-1:0:-1]]+rvals:
                         learner=learners.player(learner=learners.UCTlearner(c=1.0),startmove=startmove)
                         teacher=teachers.simpleteacher(threshhold,zero,negone,override=[initresponse])
-                        result=ga.evaluate(learner,teacher,1000,.99,1000)
+                        result= reciprocation.evaluation.evaluate(learner, teacher, 1000, .99, 1000)
                         f=open("firstmoveUCTdata.csv","a")
                         f.write(", ".join([str(x) for x in [threshhold,zero,negone,startmove,initresponse,result[2]]])+"\n")
                         f.close()
@@ -167,7 +168,7 @@ if __name__=="__maain__":
                                                     if (discountfactor,iterations,1,p1c,p2c,p1t,p2t,p1z,p2z,p1n1,p2n1,p1w,p2w) not in result.index:
                                                         p1=learners.player("UCT", c=p1c, teachingstrat=teachers.simpleteacher(p1t, p1z, p1n1), teachingweight=p1w)
                                                         p2=learners.player("UCT", c=p2c, teachingstrat=teachers.simpleteacher(p2t, p2z, p2n1), teachingweight=p2w)
-                                                        evaluation=ga.evaluate(p1,p2,iterations,discountfactor=discountfactor,repetitions=1)
+                                                        evaluation= reciprocation.evaluation.evaluate(p1, p2, iterations, discountfactor=discountfactor, repetitions=1)
                                                         print str((discountfactor,iterations,1,p1c,p2c,p1t,p2t,p1z,p2z,p1n1,p2n1,p1w,p2w))
                                                         result.loc[(discountfactor,iterations,1,p1c,p2c,p1t,p2t,p1z,p2z,p1n1,p2n1,p1w,p2w),:]=(evaluation[0],evaluation[2])
                                                         if max(result.index.duplicated()):
@@ -180,7 +181,7 @@ if __name__=="tlanneal":
     for row in data.iterrows():
         agent=learners.player("UCT", c=row[1]["agent_c"], teachingstrat=teachers.simpleteacher(row[1]["agent_threshhold"], row[1]["agent_zero"], row[1]["agent_negone"]), teachingweight=row[1]["agent_tweight"])
         opponent=learners.player("UCT", c=row[0][1], teachingstrat=teachers.simpleteacher(row[0][2], row[0][3], row[0][4]), teachingweight=row[0][5])
-        print "\t".join(str(v) for v in ga.evaluate(agent,opponent,1000,.99,100))
+        print "\t".join(str(v) for v in reciprocation.evaluation.evaluate(agent, opponent, 1000, .99, 100))
 
 
 
@@ -192,7 +193,7 @@ if __name__=="noisedata":
         outline=str(noise)+","
         for strat in [simplegreedystrat,simplefairstrat,simplegenerousstrat]:
             strat.noise=noise
-            e=ga.evaluate(uct,strat,10000,1,100)
+            e= reciprocation.evaluation.evaluate(uct, strat, 10000, 1, 100)
             outline=outline+str(e[2])+","
         resultfile.write(outline+"\n")
     resultfile.close()

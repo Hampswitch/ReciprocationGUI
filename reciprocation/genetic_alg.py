@@ -3,16 +3,17 @@
 """
 
 import bisect
-import math
 import random
+
 import numpy as np
 import pandas
-import statsmodels.stats.api as smsa
 import scipy.stats
 
-from learningstrategies import player
-from teachingstrategies import reciprocal,simpleteacher
 import learningstrategies as ls
+from learningstrategies import player
+from reciprocation.evaluation import evaluate
+from teachingstrategies import reciprocal, simpleteacher
+
 
 class staticstrat:
     def __init__(self,response=0.0):
@@ -97,63 +98,19 @@ class randomlinearstrat(genestrat):
         return result
 
 
-
-def evaluate(strat1, strat2, iterations, discountfactor=1.0, repetitions=1,actionnoise=0.0,signalnoise=0.0,alpha=.05,skipfirst=0):
-    curdiscount=1.0
-    score1list=[]
-    score2list=[]
-    move=None
-    for j in range(repetitions):
-        normalize = 0.0
-        score1 = 0.0
-        score2 = 0.0
-        strat1.reset()
-        strat2.reset()
-        for i in range(iterations):
-            move=strat1.respond(move)
-            if actionnoise>0:
-                move=max(-1.0,min(1.0,move+random.normalvariate(0,actionnoise)))
-            if skipfirst<=i:
-                score1=score1+curdiscount*math.sqrt(1-move**2)
-                score2=score2+curdiscount*move
-            if signalnoise>0:
-                move=max(-1.0,min(1.0,move+random.normalvariate(0,signalnoise)))
-            move=strat2.respond(move)
-            if actionnoise>0:
-                move=max(-1.0,min(1.0,move+random.normalvariate(0,actionnoise)))
-            if skipfirst<=i:
-                score1=score1+curdiscount*move
-                score2=score2+curdiscount*math.sqrt(1-move**2)
-            if signalnoise>0:
-                move=max(-1.0,min(1.0,move+random.normalvariate(0,signalnoise)))
-            if skipfirst<=i:
-                normalize=normalize+curdiscount
-            curdiscount = curdiscount * discountfactor
-        move=None
-        curdiscount=1.0
-        score1list.append(score1/normalize)
-        score2list.append(score2/normalize)
-    if repetitions>1:
-        return (np.mean(score1list), np.std(score1list), np.mean(score2list), np.std(score2list),
-            smsa.DescrStatsW(score1list).tconfint_mean(alpha=alpha),
-            smsa.DescrStatsW(score2list).tconfint_mean(alpha=alpha))
-    else:
-        return (score1list[0],score2list[0])
-
-
 #TODO: save performance records of a given strat - this function returns the generated lists as well as the result, and
 # can accept initial lists
 def compare(strat1,strat2,learner,iterations=1000,discountfactor=1.0,threshhold=.1,default=True):
-    strat1list=[evaluate(strat1,learner,iterations,discountfactor,1)[0] for i in range(10)]
-    strat2list=[evaluate(strat2,learner,iterations,discountfactor,1)[0] for i in range(10)]
+    strat1list=[evaluate(strat1, learner, iterations, discountfactor, 1)[0] for i in range(10)]
+    strat2list=[evaluate(strat2, learner, iterations, discountfactor, 1)[0] for i in range(10)]
     while scipy.stats.ttest_ind(strat1list,strat2list,equal_var=False).pvalue>threshhold and len(strat1list)<1000:
         print len(strat1list)
         print numpy.mean(strat1list)
         print numpy.std(strat1list)
         print numpy.mean(strat2list)
         print numpy.std(strat2list)
-        newstrat1=[evaluate(strat1,learner,iterations,discountfactor,1)[0] for i in range(10)]
-        newstrat2=[evaluate(strat2,learner,iterations,discountfactor,1)[0] for i in range(10)]
+        newstrat1=[evaluate(strat1, learner, iterations, discountfactor, 1)[0] for i in range(10)]
+        newstrat2=[evaluate(strat2, learner, iterations, discountfactor, 1)[0] for i in range(10)]
         strat1list=strat1list+newstrat1
         strat2list=strat2list+newstrat2
     if len(strat1list)<1000 or default:
@@ -191,7 +148,7 @@ class genepool:
         self.mutatemag=.5
 
     def rungeneration(self):
-        scores=[evaluate(r,self.learnerfactory.mklearner(),self.evallength,self.discountfactor,self.evalcount) for r in self.genepool]
+        scores=[evaluate(r, self.learnerfactory.mklearner(), self.evallength, self.discountfactor, self.evalcount) for r in self.genepool]
         scores=[self.darwin**x for x in scores]
         newpool=[]
         mutatemod=2-sum(scores)/len(scores)
@@ -388,7 +345,7 @@ simple teacher vs UCT c=1 .885, -.9, -.925
 
 if __name__=="mkdata":
     result={}
-    print evaluate(reciprocal([(-1,-1),(1,1)],bias=None),player("UCT",False,.5,0,c=4),1000,.99,10)
+    print evaluate(reciprocal([(-1, -1), (1, 1)], bias=None), player("UCT", False, .5, 0, c=4), 1000, .99, 10)
     print anneal(player("UCT",False,.5,0,c=4),1000,1000,.99,stratlen=5)
     if False:
         for df in [.9,.99,.999,1.0]:

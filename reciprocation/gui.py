@@ -5,7 +5,7 @@ import learningstrategies as ls
 import reciprocation.UCB
 import teachingstrategies as ts
 import teachinglearning as tl
-import negotiator as ng
+import seqstrat as ng
 
 class gametracker(tk.Frame):
     def __init__(self,master,curplayer=0):

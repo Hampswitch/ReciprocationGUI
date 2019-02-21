@@ -6,6 +6,7 @@ from matplotlib import pyplot as plot
 from mpl_toolkits import mplot3d
 import math
 
+import reciprocation.evaluation
 import reciprocation.scriptutil as scriptutil
 import reciprocation.genetic_alg as ga
 
@@ -21,7 +22,8 @@ def calcresult(params):
     teacher.reset()
     learner.setstartmove(startmove)
     teacher.setstartmove(response)
-    return (startmove,response,ga.evaluate(learner,teacher,iterations,discountfactor,repetitions)[2])
+    return (startmove, response,
+            reciprocation.evaluation.evaluate(learner, teacher, iterations, discountfactor, repetitions)[2])
 
 def createmesh(teacher,learner,gridvals=None,iterations=1000,discountfactor=.99,repetitions=10,poolsize=None,correct=True):
     if gridvals is None:
@@ -34,7 +36,8 @@ def createmesh(teacher,learner,gridvals=None,iterations=1000,discountfactor=.99,
                 teacher.reset()
                 learner.setstartmove(startmove)
                 teacher.setstartmove(response)
-                result[response][startmove]=ga.evaluate(learner,teacher,iterations,discountfactor,repetitions)[2]
+                result[response][startmove]= \
+                reciprocation.evaluation.evaluate(learner, teacher, iterations, discountfactor, repetitions)[2]
                 if correct:
                     result[response][startmove]=result[response][startmove]-math.sqrt(1-response*response)-startmove
         return result

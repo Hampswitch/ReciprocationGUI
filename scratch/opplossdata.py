@@ -1,6 +1,7 @@
 
 import math
 
+import reciprocation.evaluation
 import reciprocation.linearstrat as ls
 import reciprocation.UCB as UCB
 import reciprocation.genetic_alg as ga
@@ -13,7 +14,7 @@ for threshold in [math.sin((i+.5)*math.pi/20) for i in range(10)]:
     while repetitions < 10000:
         p1=ls.slopestrat(threshold)
         p2=UCB.TrackBucketUCB()
-        result=ga.evaluate(p1,p2,int(repetitions),1.0,10)
+        result= reciprocation.evaluation.evaluate(p1, p2, int(repetitions), 1.0, 10)
         print "{},{},{}".format(int(repetitions),threshold,(2*math.sqrt(1-threshold**2)-result[2])*repetitions/2.0)
         repetitions=repetitions*1.5
 

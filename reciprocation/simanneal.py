@@ -7,11 +7,13 @@ import dill
 import genetic_alg as ga
 import linearstrat as ls
 import UCB as ucb
+import reciprocation.evaluation
+
 
 def evalwrap(dillarglist):
     arglist=dill.loads(dillarglist)
     opponent,particle,iterations,discountfactor,repetitions,skiprounds=dill.loads(dillarglist)
-    result=ga.evaluate(opponent,particle,iterations,discountfactor,repetitions,skipfirst=arglist[5])
+    result= reciprocation.evaluation.evaluate(opponent, particle, iterations, discountfactor, repetitions, skipfirst=arglist[5])
     if arglist[4]<2:
         return result[1]
     else:
@@ -30,9 +32,9 @@ def nonparalleleval(opponent,population,iterations,discountfactor,repetitions,sk
     results=[]
     for p in population:
         if repetitions<2:
-            results.append(ga.evaluate(opponent, p, iterations, discountfactor, repetitions,skipfirst=skiprounds)[1])
+            results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1])
         else:
-            results.append(ga.evaluate(opponent,p,iterations,discountfactor,repetitions,skipfirst=skiprounds)[2])
+            results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[2])
     return results
 
 def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",perturbargs=[],iterations=1000,discountfactor=.99,repetitions=1,processes=4,verbose=False,skiprounds=0):

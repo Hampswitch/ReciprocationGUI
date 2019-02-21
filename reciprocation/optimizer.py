@@ -2,7 +2,8 @@
 
 # DEPRECATED
 
-from genetic_alg import evaluate
+from reciprocation.evaluation import evaluate
+
 
 class optimizer:
     def __init__(self,learner,iterations,discountfactor,repetitions):

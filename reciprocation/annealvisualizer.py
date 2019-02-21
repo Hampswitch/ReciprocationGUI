@@ -6,6 +6,7 @@ import ast
 import math
 import Tkinter as tk
 import evaluatorGUI
+import reciprocation.evaluation
 from reciprocation.linearstrat import linearstrat
 import reciprocation.UCB as ucb
 import reciprocation.genetic_alg as ga
@@ -137,7 +138,7 @@ if __name__=="__dfmkdata__":
         for df in dflist:
             annealed=mklinearstratfromfile(filename)
             opponent=ucb.TrackBucketUCB(8, 1, 4000, .001, widthexp=1)
-            result=ga.evaluate(annealed, opponent, 1000, df, 1000, 0,0,.05)
+            result= reciprocation.evaluation.evaluate(annealed, opponent, 1000, df, 1000, 0, 0, .05)
             resultlist.append(result[0])
         print filename
         print resultlist
@@ -158,7 +159,7 @@ if __name__=="__egendata__":
         for e in elist:
             annealed = mklinearstratfromfile(filename)
             opponent = ucb.TrackBucketUCB(8, e, 4000, .001, widthexp=1)
-            result = ga.evaluate(annealed, opponent, 1000, .99, 1000, 0, 0, .05)
+            result = reciprocation.evaluation.evaluate(annealed, opponent, 1000, .99, 1000, 0, 0, .05)
             resultlist.append(result[0])
         print filename
         print resultlist

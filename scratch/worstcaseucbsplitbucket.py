@@ -17,8 +17,18 @@ def opponent(x,epsilon,threshold):
     else:
         return (x-threshold)/(1-threshold)
 
+def opponent(x,epsilon,maxslope):
+    if x<.5:
+        return 1.0-epsilon
+    elif x<.5+(1.0-epsilon)/maxslope:
+        return 1.0-epsilon-(x-.5)*maxslope
+    elif x<1-1.0/maxslope:
+        return 0
+    else:
+        return 1.0-(1.0-x)*maxslope
+
 class testTrackBucketUCB:
-    def __init__(self, bucketcount=8, exploration=1.0, splitthreshold=4, minbucketsize=1e-6, widthexp=.5):
+    def __init__(self, bucketcount=8, exploration=1.0, splitthreshold=4, minbucketsize=1e-6, widthexp=1.0):
         self.exploration=exploration
         self.splitthreshold=splitthreshold
         self.minbucketsize=minbucketsize
@@ -66,7 +76,7 @@ class testTrackBucketUCB:
         else:
             n=sum([len(b) for b in self.buckets])
             self.status=[(sum([r for m,r in self.buckets[i]])/len(self.buckets[i])+
-                                math.sqrt(self.exploration*math.log(n)/len(self.buckets[i]))*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i])**self.widthexp,i)
+                                self.exploration*math.sqrt(math.log(n)/len(self.buckets[i]))*((self.lowerbounds+[1.0])[i+1]-self.lowerbounds[i])**self.widthexp,i)
                              for i in range(len(self.buckets))]
 
         return max(self.status)[1]
@@ -82,8 +92,26 @@ def evalSplitUCB(n,learner,epsilon,threshold):
         count=count+1
         if i==1000:
             print "1000"
-        print "Move: {} Response: {} Average: {}({})".format(move,response,total/count,count)
+        print "Move: {} Response: {} Total: {} Average: {} ({})".format(move,response,total,total/count,count)
+
+def mkdata(epsilon,maxslope,exploration):
+    response=None
+    total=0
+    learner=testTrackBucketUCB(bucketcount=2,exploration=exploration,splitthreshold=2)
+    for i in range(10000):
+        move=learner.respond(response)
+        response=opponent(move,epsilon,maxslope)
+        total=total+response
+    return 10000.0-total
+
+if __name__=="__main1__":
+    learner=testTrackBucketUCB(bucketcount=2,exploration=1,splitthreshold=2)
+    evalSplitUCB(10000,learner,.1,50)
+    print learner.buckets[-10:]
+    print learner.lowerbounds[-10:]
 
 if __name__=="__main__":
-    learner=testTrackBucketUCB(bucketcount=16,exploration=1)
-    evalSplitUCB(10000,learner,.1,.85)
+    for epsilon in [.5,.1,.02]:
+        for maxslope in [2,10,50,250]:
+            for explore in [.1,1,10,100,1000]:
+                print "{}, {}, {}, {:.2f}".format(epsilon,maxslope,explore,mkdata(epsilon,maxslope,explore))

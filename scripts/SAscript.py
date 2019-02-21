@@ -5,8 +5,9 @@ import reciprocation.linearstrat as ls
 import sys
 import reciprocation.learningstrategies as learn
 import reciprocation.KNNUCB as knnucb
-import reciprocation.negotiator as negot
+import reciprocation.seqstrat as negot
 import reciprocation.distplayer as distplayer
+import reciprocation.discretegame as discrete
 
 # params : stepsize,stepratio,minstep,repetitions
 # base : .2,.9,.001,1
@@ -31,7 +32,20 @@ opponentparams=[("UCBsplit",1.0),
                 ("StubbornMix",.95,.5,.5,5),
                 ("StubbornMix",.6,.5,.5,5),
                 ("StubbornMix",.8,.5,.1,5),
-                ("StubbornMix",.8,.5,.9,5)]
+                ("StubbornMix",.8,.5,.9,5),
+                ("DiscreteUCB", 2.0, 8), #20
+                ("DiscreteUCB",1.0,8),
+                ("DiscreteUCB",.5,8),
+                ("DiscreteUCB",.25,8),
+                ("DiscreteUCB",2.0,16),
+                ("DiscreteUCB",1.0,16),
+                ("DiscreteUCB",.5,16),
+                ("DiscreteUCB",.25,16),
+                ("DiscreteUCB",2.0,32),
+                ("DiscreteUCB",1.0,32),
+                ("DiscreteUCB",.5,32), #30
+                ("DiscreteUCB",.25,32)]
+
 
 # discount, iterations, skiprounds
 evaluationparams=[(.99,1000,0),
@@ -39,14 +53,22 @@ evaluationparams=[(.99,1000,0),
                   (.99,1000,50),
                   (1.0,1000,10),
                   (1.0,1000,50),
-                  (1.0,1000,0)]
+                  (1.0,1000,0), #5
+                  (.999,10000,0),
+                  (.9999,100000,0),
+                  (1.0,10000,0),
+                  (.99,10000,0),
+                  (.98,10000,0), #10
+                  (.96,10000,0),
+                  (.92,10000,0)]
 
 # stepsize,stepratio,minstep,repetitions
 annealparams=[(.2,.99,.01,10),
               (.2,.995,.01,10),
               (.2,.99,.01,20),
               (.2,.997,.01,10),
-              (.2,.9985,.01,10)]
+              (.2,.9985,.01,10),
+              (.5,.99,.05,10)]
 
 # perturbfunc,expandfactor,resolution
 particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
@@ -54,7 +76,12 @@ particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
                 ((10,"regularlinear",65),"fullvertperturb",(8,)),
                 ((10,"regularlinear",129),"fullvertperturb",(8,)),
                 ((10,"biasedlinear"),"fullvertperturb",(8,)),
-                ((10,"seqslope"),"fullpermute",(8,))]
+                ((10,"seqslope"),"fullpermute",(8,)), #5
+                ((10,"discrete",16),"perturbsmall",(8,)),
+                ((10,"discrete",16),"perturblarge",(8,)),
+                ((10, "discreterandom", 8), "perturbsmall", (8,)),
+                ((10, "discreterandom", 16), "perturbsmall", (8,)),
+                ((10, "discreterandom", 32), "perturbsmall", (8,))]
 
 # opponent,eval,anneal,particle
 combinedparams=[(0,0,0,0),
@@ -102,7 +129,28 @@ combinedparams=[(0,0,0,0),
                 (16,0,0,5),
                 (17,0,0,5),
                 (18,0,0,5),
-                (19,0,0,5)]
+                (19,0,0,5),
+                (20,0,5,6),
+                (20,0,5,7),
+                (20,0,5,8),
+                (20,6,5,8),
+                (20,7,5,8), #50
+                (25,8,5,9),
+                (25, 9, 5, 9),
+                (25, 10, 5, 9),
+                (25, 11, 5, 9),
+                (25, 12, 5, 9),
+                (21, 8, 5, 8),
+                (25, 8, 5, 9),
+                (29, 8, 5, 10),
+                (24, 8, 5, 9),
+                (25, 8, 5, 9),
+                (26, 8, 5, 9),
+                (27, 8, 5, 9)]
+
+# 51-55 - discrete, varying discount factors
+# 56-58 - discrete, varying # moves
+# 59-62 - discrete, varying exploration
 
 def getopponent(index):
     if opponentparams[index][0]=="fastlearner":
@@ -129,6 +177,8 @@ def getopponent(index):
         return distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), ls.slopestrat(opponentparams[index][2])], [opponentparams[index][3],1.0-opponentparams[index][3]])
     elif opponentparams[index][0]=="StubbornMix":
         return distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), negot.stepannealer([(opponentparams[index][1], opponentparams[index][4]), (opponentparams[index][2], 100)])], [opponentparams[index][3],1.0-opponentparams[index][3]])
+    elif opponentparams[index][0]=="DiscreteUCB":
+        return discrete.discreteucb(discrete.getdiscretemoves(opponentparams[index][2]),player=0,explore=opponentparams[index][1])
     else:
         raise ValueError("Unrecognized Opponent Type: "+opponentparams[index][0])
 
@@ -155,13 +205,24 @@ def getparticleparams(index):
         return ([ls.linearstrat.biasedlinear() for i in range(particle[0])],perturbfunc,perturbargs)
     elif particle[1]=="seqslope":
         return ([negot.stepannealer() for i in range(particle[0])],perturbfunc,perturbargs)
+    elif particle[1]=="discrete":
+        return ([discrete.discreteteacher(discrete.getdiscretemoves(particle[2]),player=1) for i in range(particle[0])],perturbfunc,perturbargs)
+    elif particle[1]=="discreterandom":
+        return ([discrete.randomizingteacher(discrete.getdiscretemoves(particle[2]),player=1) for i in range(particle[0])],perturbfunc,perturbargs)
     else:
         raise ValueError("Unrecognized particle type: "+str(particle[1]))
 
 
 if __name__=="__main__":
-    c=int(sys.argv[1])
-
+    if True:
+        c=int(sys.argv[1])
+        processes=22
+        verbose=False
+    else:
+        print "HARDCODED PARAMETERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+        c=49
+        processes=None
+        verbose=True
     o,e,a,p=combinedparams[c]
 
     print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
@@ -174,4 +235,6 @@ if __name__=="__main__":
         stepsize,stepratio,minstep,repetitions=getannealparams(a)
         discount,iterations,skiprounds=getevalparams(e)
         print sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
-                    perturbargs,iterations,discount,repetitions,22,skiprounds=skiprounds,verbose=False)
+                    perturbargs,iterations,discount,repetitions,processes=processes,skiprounds=skiprounds,verbose=verbose)
+
+
