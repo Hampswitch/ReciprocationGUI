@@ -120,7 +120,7 @@ class randomizingteacher:
         pass
 
     def __str__(self):
-        return "Randomizing Teacher: ["+self.getDescription()+"]"
+        return "Randomizing Teacher: ["+self.getDescription()+"]"+str(self.strat)
 
     def __repr__(self):
         return str(self)
