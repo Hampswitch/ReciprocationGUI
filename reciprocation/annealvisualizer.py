@@ -130,6 +130,28 @@ if __name__=="__main__":
     annealdisp(master).pack(side=tk.TOP)
     tk.mainloop()
 
+if __name__=="__mainx__": # make single graphs of strategies and payoffs
+    plt.figure(figsize=(8,6))
+    #for filename in ["results/SAparam26.txt","results/SAparam27.txt","results/SAparam28.txt","results/SAparam29.txt","results/SAparam30.txt"]:
+    for filename in ["results/SAparam32.txt", "results/SAparam33.txt", "results/SAparam34.txt", "results/SAparam35.txt", "results/SAparam36.txt"]:
+        stratlists=parsesinglefile(filename)
+        stratlist=[s for sl in stratlists for s in sl]
+        xvals=[x[0] for x in stratlist[0]]
+        yvals=[[y[1] for y in x] for x in zip(*stratlist)]
+        ymeans=[np.mean(y) for y in yvals]
+        ystd=[np.std(y) for y in yvals]
+        plt.plot(xvals,ymeans)
+        plt.fill_between(xvals,[m-1.96*s for m,s in zip(ymeans,ystd)],[m+1.96*s for m,s in zip(ymeans,ystd)],alpha=.25)
+    plt.xlim(-1,1)
+    plt.ylim(-1,1)
+    plt.xlabel("Opponent Move")
+    plt.ylabel("Player Response")
+    plt.title("Best Strategies by Opponent Exploration Factor")
+    #plt.legend(["Discount Factor 0.25", "Discount Factor 0.1", "Discount Factor 0.05", "Discount Factor 0.01", "Discount Factor 0.001"])
+    plt.legend(["Exploration Factor 0.125", "Exploration Factor 0.25", "Exploration Factor 0.5", "Exploration Factor 1.0", "Exploration Factor 2.0"])
+    plt.show()
+
+
 if __name__=="__dfmkdata__":
     dflist=[.75,.9,.95,.99,.999]
     plt.figure(figsize=(8, 6))
@@ -171,20 +193,21 @@ if __name__=="__egendata__":
     plt.title("Performance variation by discount factor")
     plt.show()
 
-if __name__=="__maindfgraph__":
+if __name__=="__maindf__":
     data=[[1.0393325211712521, 1.1937296027245028, 1.307791724319006, 1.4564787728000956, 1.5078830258654985],
           [1.0352379329553323, 1.2958337241360123, 1.480149020032179, 1.686108050664614, 1.7513679503646582],
           [0.95759735869500762, 1.2855335401356578, 1.5296591783452127, 1.7946136717818486, 1.8794943193379046],
           [0.82374842130867321, 1.1980437599895104, 1.4952292482120808, 1.8272824916881123, 1.9196644334665196],
           [0.71133150391023625, 1.1059414045661433, 1.4125624426546419, 1.8010719310310705, 1.9322540263044952]]
-    dfvals=[.75,.9,.95,.99,.999]
-    for i in range(5):
-        plt.plot(dfvals,data[i])
-    plt.xlim(.75,1)
-    plt.ylim(.5,2)
+    dfvals=[.1,.05,.01,.001]
+    for i in range(1,5):
+        yvals=[x/2 for x in data[i][1:]]
+        plt.plot(dfvals,yvals)
+    plt.xlim(0,.1)
+    plt.ylim(.5,1)
     plt.xlabel("Discount Factor")
     plt.ylabel("Annealed Strategy Score")
-    plt.legend(["Optimized for .75","Optimized for .9","Optimized for .95"," Optimized for .99","Optimized for .999"])
+    plt.legend(["Optimized for .1","Optimized for .05"," Optimized for .01","Optimized for .001"])
     plt.title("Performance of Strategies Annealed for Discount Factor")
     plt.show()
 

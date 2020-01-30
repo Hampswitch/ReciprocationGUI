@@ -1,0 +1,15 @@
+Scripts
+  mksamplegraphs - script to make sample graphs for ratio enforcing functions
+  
+Visualizers
+  annealvisualizer.py - textbox entry to display functions generated in SAparam files
+  discretevisualizer.py - scripts to display functions generated for discrete strategies
+  firstmove visualizer - textbox entry to display the effects of the first move on payoffs
+  evaluatorGUI - run strategies against each other and evaluate the results
+  GPvisualizer - Runs a gaussian process visualization algorithm - allows you to adjust the parameters
+  gui - similar to evaluatorGUI, but instead of being able to select strategies, allows you to observe two strategies playing against each other move by move
+        Includes graphical visualization
+  KNNvisualizer - similar to GP visualizer, but buggy
+  meshgui - create mesh based on startmove and responding move between 2 agents
+  stepfuncvisualizer - display the threshold functions found by simulated annealing
+  stratExplorer - Look at space of possible payoffs for various linear strategies

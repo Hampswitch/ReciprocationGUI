@@ -1,7 +1,7 @@
 import Tkinter as tk
 
 import matplotlib.pyplot as plot
-from mpl_toolkits import mplot3d
+from mpl_toolkits.mplot3d import Axes3D
 import numpy as np
 import pandas
 
