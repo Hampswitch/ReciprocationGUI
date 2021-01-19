@@ -22,6 +22,7 @@ import annealvisualizer
 import seqstrat
 import linearstrat as linstrat
 import discretegame as discrete
+import controls
 
 class ParameterPanel(tk.Frame):
     def __init__(self,master,parameters):
@@ -55,6 +56,34 @@ class discreteUCBSelector(tk.Frame):
     def getPlayer(self):
         params=self.params.getparameters()
         return discrete.discreteucb(discrete.getdiscretemoves(params[0]),params[1],params[2])
+
+class SeqAutocratic(tk.Frame):
+    def __init__(self,master):
+        tk.Frame.__init__(self,master)
+        tk.Label(self,text="Sequential Autocratic").pack(side=tk.TOP)
+        self.functrl = controls.thresholdfunctioncontrol(self,width=410,height=210,verbose=True)
+        self.functrl.pack(side=tk.TOP)
+        f=tk.Frame(self)
+        f.pack(side=tk.TOP)
+        self.funcstr=tk.Entry(f)
+        self.funcstr.pack(side=tk.LEFT)
+        tk.Button(f,text="Load",command=self.loadstr).pack(side=tk.LEFT)
+        self.params=ParameterPanel(self,[("Forgive",tk.DoubleVar,0.0),("Offset",tk.IntVar,0)])
+        self.params.pack(side=tk.TOP)
+
+    def __str__(self):
+        return "Sequential Autocratic ({})".format(str(self.getPlayer()))
+
+    def getPlayer(self):
+        params=self.params.getparameters()
+        thresholds=[x[1] for x in self.functrl.pointlist]
+        lossvalues=[x[0] for x in self.functrl.pointlist]
+        return seqstrat.thresholdfunctionparticle(seqstrat.thresholdfunction(thresholds,lossvalues),params[0],params[1])
+
+    def loadstr(self):
+        s=self.funcstr.get()
+        tp=seqstrat.thresholdfunctionparticle.fromString(s)
+        self.functrl.setpoints([(l,t) for t,l in zip(tp.thresholdfunc.thresholdvalues,tp.thresholdfunc.lossvalues)])
 
 class discreteteacher(tk.Frame):
     def __init__(self,master):
@@ -362,9 +391,10 @@ class PlayerSelector(tk.Frame):
         tk.Button(buttonpanel, text="Linear Strat", command=lambda: self.setSelector(LinearStratSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Negotiator",command=lambda: self.setSelector(negotiatorSelector)).pack(side=tk.TOP)
         tk.Button(buttonpanel, text="Slope Strat", command=lambda: self.setSelector(slopeSelector)).pack(side=tk.TOP)
-        tk.Button(buttonpanel, text="Discrete UCB", command=lambda: self.setSelector(discreteUCBSelector)).pack(side=tk.TOP)
-        tk.Button(buttonpanel, text="Discrete Teacher", command=lambda: self.setSelector(discreteteacher)).pack(side=tk.TOP)
-        tk.Button(buttonpanel, text="Discrete Random Teacher", command=lambda: self.setSelector(discreterandomteacher)).pack(side=tk.TOP)
+        tk.Button(buttonpanel, text="Seq Autocratic", command=lambda: self.setSelector(SeqAutocratic)).pack(side=tk.TOP)
+        #tk.Button(buttonpanel, text="Discrete UCB", command=lambda: self.setSelector(discreteUCBSelector)).pack(side=tk.TOP)
+        #tk.Button(buttonpanel, text="Discrete Teacher", command=lambda: self.setSelector(discreteteacher)).pack(side=tk.TOP)
+        #tk.Button(buttonpanel, text="Discrete Random Teacher", command=lambda: self.setSelector(discreterandomteacher)).pack(side=tk.TOP)
         self.selectorpanel=tk.Frame(self)
         self.selectorpanel.pack(side=tk.LEFT)
         self.selector=None
@@ -496,7 +526,8 @@ class EvaluatorGUI(tk.Frame):
         self.log.insert(tk.END,"Left Player: {0:5.4f}({1:5.4f}) ({4:5.4f}-{5:5.4f})\n     Right Player: {2:5.4f}({3:5.4f}) ({6:5.4f}-{7:5.4f})\n".format(result[0],result[1],result[2],result[3],result[4][0],result[4][1],result[5][0],result[5][1]))
         self.log.insert(tk.END,"Time taken: "+str(stop-start)+"\n")
         self.log.see(tk.END)
-        self.bell()
+        if stop-start>1:
+            self.bell()
 
 if __name__=="__main__":
     master = tk.Tk()

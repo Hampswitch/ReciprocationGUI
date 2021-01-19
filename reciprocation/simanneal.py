@@ -8,6 +8,7 @@ import genetic_alg as ga
 import linearstrat as ls
 import UCB as ucb
 import reciprocation.evaluation
+import distplayer
 
 
 def evalwrap(dillarglist):
@@ -32,7 +33,13 @@ def nonparalleleval(opponent,population,iterations,discountfactor,repetitions,sk
     results=[]
     for p in population:
         if repetitions<2:
-            results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1])
+            if isinstance(opponent,distplayer.distplayer):
+                result=0.0
+                for player,wt in zip(opponent.playerlist,opponent.weights):
+                    result=result+wt*reciprocation.evaluation.evaluate(player,p,iterations,discountfactor,repetitions,skipfirst=skiprounds)[1]
+                results.append(result)
+            else:
+                results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1])
         else:
             results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[2])
     return results
@@ -40,14 +47,15 @@ def nonparalleleval(opponent,population,iterations,discountfactor,repetitions,sk
 def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",perturbargs=[],iterations=1000,discountfactor=.99,repetitions=1,processes=4,verbose=False,skiprounds=0):
     while stepsize>minstep:
         # Create potential children
-        expandpop=[perturbed for member in population for perturbed in getattr(member,perturbfunc)(stepsize,*perturbargs)]
+        expandpop=population+[perturbed for member in population for perturbed in getattr(member,perturbfunc)(stepsize,*perturbargs)]
         # Evaluate potential children
         if processes is not None:
             evaluations=paralleleval(opponent,expandpop,iterations,discountfactor,repetitions,skiprounds,processes)
         else:
             evaluations=nonparalleleval(opponent,expandpop,iterations,discountfactor,repetitions,skiprounds)
         if verbose:
-            print stepsize
+            print "Step size: {}".format(stepsize)
+            print max(evaluations)
             print(sum(evaluations)/len(evaluations))
         # Select best children
         population=[expandpop[i] for s,i in sorted([(y,x) for x,y in enumerate(evaluations)])[-len(population):]]
@@ -55,5 +63,5 @@ def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",
     return population
 
 if __name__=="__main__":
-    learner=ucb.TrackBucketUCB()
-    print anneal([ls.linearstrat.regularlinear(5) for i in range(10)],learner,.2,.9,.001,"fullvertperturb",[4],1000,.99,1,None,True)
+    learner=ucb.TrackBucketUCB(8,1,4,.001,None,True,0)
+    print anneal([ls.regularlinearstrat.random(9) for i in range(10)],learner,.2,.95,.05,"splitperturb",[4],1000,.99,10,None,True)

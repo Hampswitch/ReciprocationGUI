@@ -16,7 +16,8 @@ class gametracker(tk.Frame):
         displaypanel.pack(side=tk.TOP)
         self.stratselector=[None,None]
         #self.stratselector[0] = controls.ReciprocalStrategySelector(displaypanel)
-        self.stratselector[0]=controls.textlearner(displaypanel,ng.functionnegotiator(ng.mkstepfunc([(10,.9),(100,.707),(500,.5),(900,.1)],.001),.1))
+        #self.stratselector[0]=controls.textlearner(displaypanel,ng.functionnegotiator(ng.mkstepfunc([(10,.9),(100,.707),(500,.5),(900,.1)],.001),.1))
+        self.stratselector[0]= controls.textlearner(displaypanel,ng.thresholdfunctionparticle(points=4,totalloss=30.0))
         #self.stratselector[0]=controls.textlearner(displaypanel,ts.simpleteacher(.95,-.8,0))
         #self.stratselector[0]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=.25))
         #self.stratselector[0] = controls.textlearner(displaypanel,ls.player("UCT", c=1, teachingstrat=ts.simpleteacher(.85, -1, -1),teachingweight=8))
@@ -30,11 +31,12 @@ class gametracker(tk.Frame):
         #self.stratselector[1]=learners.BucketLearner(displaypanel,10)
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player(learner=ls.UCTlearner(c=1.0)))
         #self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.BucketUCB(splitthreshhold=1,splitval=1,bucketcount=8,minbucketsize=.001,exploration=1.0))
-        self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.TrackBucketUCB(widthexp=1,minbucketsize=.0001,radial=False))
+        #self.stratselector[1]=controls.textlearner(displaypanel,reciprocation.UCB.TrackBucketUCB(widthexp=1,minbucketsize=.0001,radial=False))
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.fastlearner())
         #self.stratselector[1]=controls.textlearner(displaypanel,tl.BucketUCBTL())
         #self.stratselector[1]=controls.textlearner(displaypanel,ls.player("UCT",c=1,teachingstrat=ts.simpleteacher(.7,0,0),teachingweight=2))
         #self.stratselector[1] = controls.textlearner(displaypanel,ls.player("UCT", c=1, teachingstrat=ts.simpleteacher(.85, -1 , -1),teachingweight=2))
+        self.stratselector[1]= controls.textlearner(displaypanel,ng.thresholdfunctionparticle.fromString("SeqAutocratic 0.1 0 <(1.0,0.0),(1.0,0.06965),(0.855,3.666),(0.7709,6.691),(0.6351,9.448),(0.4591,15.3),(0.4574,15.69),(0.4346,15.76),(0.2453,17.57),(0.01848,18.28)"))
         self.stratselector[1].pack(side=tk.LEFT)
 
         self.curmove = self.stratselector[self.curplayer].getResponse(None)

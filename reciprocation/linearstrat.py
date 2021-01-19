@@ -8,6 +8,66 @@ import random
 import math
 import ast
 
+class regularlinearstrat:
+    def __init__(self,strat,startmove=None):
+        self.strat=strat
+        self.startmove=startmove
+        self.start=True
+        self.n=len(self.strat)
+
+    def setstartmove(self,move):
+        self.startmove=move
+
+    @classmethod
+    def random(cls,n,startmove=None):
+        strat=[-1.0+2*random.random() for i in range(n)]
+        return cls(strat,startmove)
+
+    @classmethod
+    def blank(cls,n,startmove=None):
+        strat=n*[0.0]
+        result=cls(strat,startmove)
+        return result
+
+    def __str__(self):
+        return "Regular Linear Strat: "+str(self.strat)
+
+    def __repr__(self):
+        return str(self)
+
+    def getDescription(self):
+        return str(self)
+
+    def getStatus(self):
+        return str(self)
+
+    def reset(self):
+        self.start=True
+
+    def respond(self,move):
+        if self.startmove is not None and self.start:
+            self.start=False
+            return self.startmove
+        else:
+            if move is not None:
+                return self.getresponse(move)
+            else:
+                return 0
+
+    def getresponse(self,move):
+        r = int(math.floor((move+1)*(self.n-1)/2.0))
+        w = (move + 1.0 - r*2.0/(self.n-1)) *(self.n-1)/2.0
+        return (1 - w) * self.strat[r] + w * self.strat[r+1]
+
+    def splitperturb(self,stepsize,expandfactor=2):
+        def permute(val):
+            return min(1.0,max(-1.0,val+random.normalvariate(0,stepsize)))
+        result=[]
+        for i in range(expandfactor):
+            strat=[permute(x) for x in self.strat]
+            result.append(regularlinearstrat(strat))
+        return result
+
 class linearstrat:
     def __init__(self,strat,startmove=None):
         self.strat=strat
@@ -99,7 +159,7 @@ class linearstrat:
         return [linearstrat([(m,min(1,max(-1,r+random.normalvariate(0,stepsize)))) for (m,r) in self.strat]) for i in range(expandfactor)]
 
     def singlevertperturb(self,stepsize,expandfactor=2):
-        return [linearstrat([(m,min(1,max(-1,r+random.normalvariate(0,stepsize if i==changepos else 0)))) for i,(m,r) in enumerate(self.strat)]) for j,changepos in [(k,random.randint(0,expandfactor-1)) for k in range(expandfactor)]]
+        return [linearstrat([(m,min(1,max(-1,r+random.normalvariate(0,stepsize if i==changepos else 0)))) for i,(m,r) in enumerate(self.strat)]) for j,changepos in [(k,random.randint(0,len(self.strat)-1)) for k in range(expandfactor)]]
 
     def fullperturb(self,stepsize,expandfactor=2):
         result=[]

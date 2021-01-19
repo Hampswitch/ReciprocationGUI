@@ -133,7 +133,7 @@ if __name__=="__main__":
 if __name__=="__mainx__": # make single graphs of strategies and payoffs
     plt.figure(figsize=(8,6))
     #for filename in ["results/SAparam26.txt","results/SAparam27.txt","results/SAparam28.txt","results/SAparam29.txt","results/SAparam30.txt"]:
-    for filename in ["results/SAparam32.txt", "results/SAparam33.txt", "results/SAparam34.txt", "results/SAparam35.txt", "results/SAparam36.txt"]:
+    for filename in ["../results/SAparam32.txt", "../results/SAparam33.txt", "../results/SAparam34.txt", "../results/SAparam35.txt", "../results/SAparam36.txt"]:
         stratlists=parsesinglefile(filename)
         stratlist=[s for sl in stratlists for s in sl]
         xvals=[x[0] for x in stratlist[0]]

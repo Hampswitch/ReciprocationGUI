@@ -344,3 +344,81 @@ class textlearner(tk.Frame):
         self.description.delete(1.0,tk.END)
         self.description.insert(tk.END,self.strat.getDescription())
         return response
+
+class thresholdfunctioncontrol(tk.Frame):
+    def __init__(self,master,pointlist=None,command=None,xmin=0,xmax=20,ymin=0,ymax=1,width=210,height=110,verbose=True):
+        tk.Frame.__init__(self,master)
+        (self.xmin,self.xmax,self.ymin,self.ymax,self.width,self.height)=(xmin,xmax,ymin,ymax,width,height)
+        self.displaycanvas=tk.Canvas(self, width=self.width, height=self.height, borderwidth=1, relief=tk.RAISED, background="white")
+        self.displaycanvas.pack(side=tk.TOP)
+        self.displaycanvas.bind("<Button-1>", self.__mousedown)
+        self.displaycanvas.bind("<ButtonRelease-1>", self.__mouseup)
+        self.displaycanvas.bind("<Control-Button-1>", self.__ctrlmouseclick)
+        self.displaycanvas.bind("<B1-Motion>",self.__mousemove)
+        self.displaycanvas.create_line(5,5,self.width-5,5,fill="grey")
+        self.displaycanvas.create_line(self.width-5,5,self.width-5,self.height-5,fill="grey")
+        self.displaycanvas.create_line(self.width-5,self.height-5,5,self.height-5,fill="grey")
+        self.displaycanvas.create_line(5,self.height-5,5,5,fill="grey")
+        self.pointlist=pointlist
+        if self.pointlist is None:
+            self.pointlist=[(xmin,ymax-.001),(xmax,ymin)]
+        self.__drawpointlist(self.pointlist)
+        self.dragging=False
+
+    def coord2value(self,c):
+        result=(self.xmin+(self.xmax-self.xmin)*max(min((c[0]-5.0)/(self.width-10.0),1.0),0.0),
+                self.ymin+(self.ymax-self.ymin)*max(min((self.height-5.0-c[1])/(self.height-10.0),1.0),0.0))
+        return result
+
+    def value2coord(self,v):
+        result=(5+(self.width-10.0)*(v[0]-self.xmin)/(self.xmax-self.xmin),
+                5+(self.height-10.0)*(self.ymax-v[1])/(self.ymax-self.ymin))
+        return result
+
+    def setpoints(self,pl):
+        self.pointlist=pl
+        self.__drawpointlist(pl)
+
+    def __mousedown(self,event):
+        (x,y)=self.coord2value((event.x,event.y))
+        for p in self.pointlist:
+            if (x-p[0])**2+(y-p[1])**2<.01:
+                self.dragging=True
+                self.pointlist.remove(p)
+
+    def __mousemove(self,event):
+        if self.dragging:
+            pl=[x for x in self.pointlist]+[self.coord2value((event.x,event.y))]
+            pl.sort()
+            self.__drawpointlist(pl)
+
+    def __mouseup(self,event):
+        if self.dragging:
+            (x,y)=self.coord2value((event.x,event.y))
+            self.pointlist.append((x,y))
+            self.pointlist.sort()
+            self.dragging=False
+            self.__drawpointlist(self.pointlist)
+
+    def __ctrlmouseclick(self,event):
+        (x,y)=self.coord2value((event.x,event.y))
+        print("{},{}  maps to {},{}".format(event.x,event.y,x,y))
+        deleted=False
+        for p in self.pointlist:
+            if (x-p[0])**2+(y-p[1])**2<.01:
+                deleted=True
+                self.pointlist.remove(p)
+        if not deleted:
+            self.pointlist.append((x,y))
+            self.pointlist.sort()
+        self.__drawpointlist(self.pointlist)
+
+    def __drawpointlist(self,pointlist):
+        self.displaycanvas.delete("lines")
+        for p1,p2 in zip(pointlist[:1]+pointlist,pointlist+pointlist[-1:]):
+            (x1,y1)=self.value2coord((p1[0],p1[1]))
+            (x2,y2)=self.value2coord((p2[0],p2[1]))
+            self.displaycanvas.create_line(x1,y1,x2,y2,tags="lines")
+        for p in pointlist:
+            (x,y)=self.value2coord((p[0],p[1]))
+            self.displaycanvas.create_oval(x-1,y-1,x+1,y+1,tags="lines")

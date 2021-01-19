@@ -44,7 +44,11 @@ opponentparams=[("UCBsplit",1.0),
                 ("DiscreteUCB",2.0,32),
                 ("DiscreteUCB",1.0,32),
                 ("DiscreteUCB",.5,32), #30
-                ("DiscreteUCB",.25,32)]
+                ("DiscreteUCB",.25,32),
+                ("GeneralMixed",("constslope",10),0.0,("constslope",20),0.0,("constslope",30),1.0),
+                ("GeneralMixed",("constslope",10),0.0,("constslope",20),1.0,("constslope",30),0.0),
+                ("GeneralMixed",("constslope",10),1.0,("constslope",20),0.0,("constslope",30),0.0),
+                ("GeneralMixed",("constslope",10),0.33,("constslope",20),0.33,("constslope",30),0.34)] #35
 
 
 # discount, iterations, skiprounds
@@ -68,7 +72,9 @@ annealparams=[(.2,.99,.01,10),
               (.2,.99,.01,20),
               (.2,.997,.01,10),
               (.2,.9985,.01,10),
-              (.5,.99,.05,10)]
+              (.5,.99,.05,10), #5
+              (1,.99,.01,10),
+              (.5,.995,.001,1)]
 
 # perturbfunc,expandfactor,resolution
 particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
@@ -81,7 +87,8 @@ particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
                 ((10,"discrete",16),"perturblarge",(8,)),
                 ((10, "discreterandom", 8), "perturbsmall", (8,)),
                 ((10, "discreterandom", 16), "perturbsmall", (8,)),
-                ((10, "discreterandom", 32), "perturbsmall", (8,))]
+                ((10, "discreterandom", 32), "perturbsmall", (8,)), #10
+                ((10,"thresholdfunction",10,20),"perturb",(20,))]
 
 # opponent,eval,anneal,particle
 combinedparams=[(0,0,0,0),
@@ -144,13 +151,23 @@ combinedparams=[(0,0,0,0),
                 (25, 8, 5, 9),
                 (29, 8, 5, 10),
                 (24, 8, 5, 9),
-                (25, 8, 5, 9),
+                (25, 8, 5, 9), #60
                 (26, 8, 5, 9),
-                (27, 8, 5, 9)]
+                (27, 8, 5, 9),
+                (30,0,0,5),
+                (32,0,6,11),
+                (32,0,7,11), #65
+                (33,0,7,11),
+                (34,0,7,11),
+                (35,0,7,11)]
 
 # 51-55 - discrete, varying discount factors
 # 56-58 - discrete, varying # moves
 # 59-62 - discrete, varying exploration
+
+def mksingleopp(params):
+    if params[0]=="constslope":
+        return negot.thresholdfunctionparticle(points=3,totalloss=params[1])
 
 def getopponent(index):
     if opponentparams[index][0]=="fastlearner":
@@ -179,6 +196,8 @@ def getopponent(index):
         return distplayer.distplayer([ls.slopestrat(opponentparams[index][1]), negot.stepannealer([(opponentparams[index][1], opponentparams[index][4]), (opponentparams[index][2], 100)])], [opponentparams[index][3],1.0-opponentparams[index][3]])
     elif opponentparams[index][0]=="DiscreteUCB":
         return discrete.discreteucb(discrete.getdiscretemoves(opponentparams[index][2]),player=0,explore=opponentparams[index][1])
+    elif opponentparams[index][0]=="GeneralMixed":
+        return distplayer.distplayer([mksingleopp(i) for i in opponentparams[index][1:] if type(i)!=float],[i for i in opponentparams[index][1:] if type(i)==float])
     else:
         raise ValueError("Unrecognized Opponent Type: "+opponentparams[index][0])
 
@@ -209,32 +228,37 @@ def getparticleparams(index):
         return ([discrete.discreteteacher(discrete.getdiscretemoves(particle[2]),player=1) for i in range(particle[0])],perturbfunc,perturbargs)
     elif particle[1]=="discreterandom":
         return ([discrete.randomizingteacher(discrete.getdiscretemoves(particle[2]),player=1) for i in range(particle[0])],perturbfunc,perturbargs)
+    elif particle[1]=="thresholdfunction":
+        return ([negot.thresholdfunctionparticle(points=particle[2],totalloss=particle[3]) for i in range(particle[0])],perturbfunc,perturbargs)
     else:
         raise ValueError("Unrecognized particle type: "+str(particle[1]))
 
 
 if __name__=="__main__":
-    if True:
+    if False:
         c=int(sys.argv[1])
         processes=22
         verbose=False
     else:
         print "HARDCODED PARAMETERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        c=49
+        c=65
         processes=None
-        verbose=True
+        verbose=False
     o,e,a,p=combinedparams[c]
 
     print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
 
     opponent=getopponent(o)
 
+    allresults=[]
 
     for dupe in range(10):
         particles,perturbfunc,perturbargs=getparticleparams(p)
         stepsize,stepratio,minstep,repetitions=getannealparams(a)
         discount,iterations,skiprounds=getevalparams(e)
-        print sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
+        result=sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
                     perturbargs,iterations,discount,repetitions,processes=processes,skiprounds=skiprounds,verbose=verbose)
-
+        print result
+        allresults.append(result)
+    print allresults
 

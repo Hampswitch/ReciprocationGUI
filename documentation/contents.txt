@@ -1,6 +1,6 @@
 Scripts
-  mksamplegraphs - script to make sample graphs for ratio enforcing functions
-  
+  scratch/mksamplegraphs - script to make sample graphs for ratio enforcing functions
+
 Visualizers
   annealvisualizer.py - textbox entry to display functions generated in SAparam files
   discretevisualizer.py - scripts to display functions generated for discrete strategies
