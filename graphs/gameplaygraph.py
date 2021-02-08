@@ -2,11 +2,19 @@
 """
 Graph that shows how much each player gives to the opponent each round.
   and what each players threshold value was in that round
+  Other things that might be good to plot:
+    point at which thresholds become compatible
+    players total score each round
+    Efficiency each round (distance of player scores from origin)
+
+
 
 """
 
 import reciprocation.seqstrat as seq
 import matplotlib.pyplot as plt
+import math
+import tfuncgraph as tfg
 
 def makegamegraph(p1,p2,rounds=1000):
     players=[p1,p2]
@@ -14,22 +22,55 @@ def makegamegraph(p1,p2,rounds=1000):
     move=None
     thresholds=[[],[]]
     moves=[[],[]]
+    payoffs=[[],[]]
+    compatibility=[]
+    efficiency=[0.0]
+    opploss=[[],[]]
     while round<rounds:
-        move=players[round%2].respond(move)
-        moves[round%2].append(move)
+        response=players[round%2].respond(move)
+        moves[round%2].append(response)
         thresholds[0].append(players[0].getThreshold())
         thresholds[1].append(players[1].getThreshold())
+        opploss[0].append(players[0].opponentloss)
+        opploss[1].append(players[1].opponentloss)
+        if thresholds[0][-1]**2+thresholds[1][-1]**2<=1:
+            compatibility.append(1)
+        else:
+            compatibility.append(-1)
+        if move is None:
+            payoffs[0].append(math.sqrt(1-response**2))
+            payoffs[1].append(response)
+        else:
+            payoffs[round%2].append((response+math.sqrt(1-move**2))/2)
+            payoffs[1-round%2].append((move+math.sqrt(1-response**2))/2)
+            efficiency.append(math.sqrt(payoffs[0][-1]**2+payoffs[1][-1]**2)/2)
         round=round+1
-    return moves,thresholds
+        move=response
+    return moves,thresholds,payoffs,compatibility,efficiency,opploss
 
 if __name__=="__main__":
     p1=seq.thresholdfunctionparticle.fromString("SeqAutocratic 0.1 0 <(1.0,0.0),(0.5,15.0),(0.0,30.0)>")
-    p2=seq.thresholdfunctionparticle.fromString("SeqAutocratic 0.1 0 <(1.0,0.0),(1.0,0.04852),(0.9155,0.7278),(0.8514,0.8774),(0.7942,1.825),(0.7421,2.234),(0.5505,2.844),(0.2789,11.34),(0.1878,26.26),(0.1826,28.3)> (1001,1.413,0.819), ")
-    p2 = seq.thresholdfunctionparticle.fromString("SeqAutocratic 0.1 0 <(1.0,0.0),(1.0,0.01208),(1.0,0.03183),(0.9432,1.05),(0.9137,6.688),(0.7246,7.073),(0.47,10.21),(0.3851,17.8),(0.005361,29.76),(0.0,79.09)>")
-    (moves,thresholds)=makegamegraph(p1,p2,1000)
+    p2=tfg.ThresholdFunctions[5][0][0]
+    (moves,thresholds,payoffs,compatibility,efficiency,opploss)=makegamegraph(p1,p2,1000)
+    p1.plotfunction("Player 1 Threshold Function")
+    p2.plotfunction("Player 2 Threshold Function")
+    p1round=p1.thresholdfunc.getRoundThresholds()
+    plt.plot(range(len(p1round)),p1round)
+    plt.show()
+    p2round=p2.thresholdfunc.getRoundThresholds()
+    plt.plot(range(len(p2round)),p2round)
+    plt.show()
     plt.plot(range(200),thresholds[0][:200],"r-")
-    plt.plot(range(200),thresholds[1][:200],"b-")
-    plt.plot(range(0,200,2),moves[0][:100],"b:")
-    plt.plot(range(1,200,2),moves[1][:100],"r:")
-    plt.legend(["p1 threshold","p2 threshold","p1 move","p2 move"])
+    plt.plot(range(0,200,2),moves[0][:100],"r:")
+    plt.plot(range(200), thresholds[1][:200], "b-")
+    plt.plot(range(1,200,2),moves[1][:100],"b:")
+    plt.plot([compatibility.index(1)]*2,[-1,1],"k-")
+    plt.xlabel("round")
+    plt.ylabel("payoff to opponent")
+    plt.legend(["p1 threshold","p1 move","p2 threshold","p2 move","threshold compatibility"])
+    plt.title("Full Gameplay Graph")
+    plt.show()
+    plt.plot(range(200),opploss[0][:200])
+    plt.plot(range(200),opploss[1][:200])
+    plt.legend(["Player 1 opponent loss","Player 2 opponent loss"])
     plt.show()

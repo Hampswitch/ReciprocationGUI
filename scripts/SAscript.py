@@ -64,7 +64,11 @@ evaluationparams=[(.99,1000,0),
                   (.99,10000,0),
                   (.98,10000,0), #10
                   (.96,10000,0),
-                  (.92,10000,0)]
+                  (.92,10000,0),
+                  (.95,1000,0),
+                  (.98,1000,0),
+                  (.995,2000,0), #15
+                  (.998,2000,0)]
 
 # stepsize,stepratio,minstep,repetitions
 annealparams=[(.2,.99,.01,10),
@@ -74,7 +78,8 @@ annealparams=[(.2,.99,.01,10),
               (.2,.9985,.01,10),
               (.5,.99,.05,10), #5
               (1,.99,.01,10),
-              (.5,.995,.001,1)]
+              (.5,.995,.001,1),
+              (.5,.99,.01,1)]
 
 # perturbfunc,expandfactor,resolution
 particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
@@ -88,7 +93,10 @@ particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
                 ((10, "discreterandom", 8), "perturbsmall", (8,)),
                 ((10, "discreterandom", 16), "perturbsmall", (8,)),
                 ((10, "discreterandom", 32), "perturbsmall", (8,)), #10
-                ((10,"thresholdfunction",10,20),"perturb",(20,))]
+                ((10,"thresholdfunction",10,20),"perturb",(20,)),
+                ((10,"thresholdhillclimb",10,20),"hillclimb",(1,)),
+                ((10,"thresholdrandom",10,20),"hillclimb",(1,)),
+                ((10,"thresholdrandom",10,30),"hillclimb",(1,))]
 
 # opponent,eval,anneal,particle
 combinedparams=[(0,0,0,0),
@@ -159,7 +167,17 @@ combinedparams=[(0,0,0,0),
                 (32,0,7,11), #65
                 (33,0,7,11),
                 (34,0,7,11),
-                (35,0,7,11)]
+                (35,0,7,11),
+                (32,0,7,12),
+                (32,0,7,13), #70
+                (32,0,8,13),
+                (33,0,8,13),
+                (34,0,8,13),
+                (32,0,8,13),
+                (32,13,8,13), #75
+                (32,14,8,13),
+                (32,15,8,13),
+                (32,16,8,13),]
 
 # 51-55 - discrete, varying discount factors
 # 56-58 - discrete, varying # moves
@@ -230,6 +248,10 @@ def getparticleparams(index):
         return ([discrete.randomizingteacher(discrete.getdiscretemoves(particle[2]),player=1) for i in range(particle[0])],perturbfunc,perturbargs)
     elif particle[1]=="thresholdfunction":
         return ([negot.thresholdfunctionparticle(points=particle[2],totalloss=particle[3]) for i in range(particle[0])],perturbfunc,perturbargs)
+    elif particle[1]=="thresholdhillclimb":
+        return (negot.thresholdfunctionparticle(points=particle[2],totalloss=particle[3]).hillclimb(.5),perturbfunc,perturbargs)
+    elif particle[1]=="thresholdrandom":
+        return ([negot.thresholdfunctionparticle.fromRandom() for i in range(particle[0])],perturbfunc,perturbargs)
     else:
         raise ValueError("Unrecognized particle type: "+str(particle[1]))
 
@@ -241,9 +263,9 @@ if __name__=="__main__":
         verbose=False
     else:
         print "HARDCODED PARAMETERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        c=65
+        c=70
         processes=None
-        verbose=False
+        verbose=True
     o,e,a,p=combinedparams[c]
 
     print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])
@@ -252,10 +274,14 @@ if __name__=="__main__":
 
     allresults=[]
 
+    opp3=negot.thresholdfunctionparticle.fromString("SeqAutocratic 0.1 0 <(1.0,0.0),(0.5,15.0),(0.0,30.0)>")
+
     for dupe in range(10):
         particles,perturbfunc,perturbargs=getparticleparams(p)
         stepsize,stepratio,minstep,repetitions=getannealparams(a)
         discount,iterations,skiprounds=getevalparams(e)
+        print("Initial Particle: "+str(particles[0]))
+        print("Opponent: "+str(opponent))
         result=sa.anneal(particles,opponent,stepsize,stepratio,minstep,perturbfunc,
                     perturbargs,iterations,discount,repetitions,processes=processes,skiprounds=skiprounds,verbose=verbose)
         print result

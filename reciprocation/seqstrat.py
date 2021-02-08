@@ -3,6 +3,7 @@ import math
 import random
 import bisect
 import re
+import matplotlib.pyplot as plt
 
 def mkstepfunc(L,limit=0):
     return lambda x: ([response for maxval,response in L if maxval>x]+[limit])[0]
@@ -162,8 +163,23 @@ class thresholdfunction:
         lossvalues.sort()
         return thresholdfunction(thresholdvalues,lossvalues)
 
+    def hillclimb(self,magnitude):
+        return [thresholdfunction(self.thresholdvalues[:i]+[self.thresholdvalues[i-1]+(self.thresholdvalues[i]-self.thresholdvalues[i-1])*(1.0-magnitude)]+self.thresholdvalues[(i+1):],self.lossvalues) for i in range(1,len(self.thresholdvalues))] + \
+               [thresholdfunction(self.thresholdvalues[:i] + [self.thresholdvalues[i]+(self.thresholdvalues[i+1]-self.thresholdvalues[i])*magnitude] + self.thresholdvalues[(i + 1):],self.lossvalues) for i in range(len(self.thresholdvalues)-1)] + \
+               [thresholdfunction(self.thresholdvalues,self.lossvalues[:i]+[self.lossvalues[i-1]+(self.lossvalues[i]-self.lossvalues[i-1])*(1.0-magnitude)]+self.lossvalues[(i+1):]) for i in range(1,len(self.lossvalues))]+ \
+               [thresholdfunction(self.thresholdvalues,self.lossvalues[:i] + [self.lossvalues[i]+(self.lossvalues[i+1]-self.lossvalues[i])*magnitude] + self.lossvalues[(i + 1):]) for i in range(len(self.lossvalues)-1)]
+
     def __str__(self):
-        return "<"+",".join(["({:.4},{:.4})".format(t,l) for t,l in zip(self.thresholdvalues,self.lossvalues)])+">"
+        return "<"+",".join(["({},{})".format(t,l) for t,l in zip(self.thresholdvalues,self.lossvalues)])+">"
+
+    def getRoundThresholds(self):
+        result=[]
+        loss=0
+        while loss<self.lossvalues[-1]:
+            result.append(self.getValue(loss))
+            loss=loss+2*math.sqrt(1-result[-1]**2)
+        result.append(self.thresholdvalues[-1])
+        return result
 
 class thresholdfunctionparticle:
     def __init__(self,tfunc=None,forgive=.1,forgiveoffset=0,points=10,totalloss=20.0):
@@ -184,6 +200,14 @@ class thresholdfunctionparticle:
         lossvalues = [float(re.match("""([0-9]*\.[0-9]+|[0-9]+)""", x.split(",")[1]).groups()[0]) for x in l[3].split("(")[1:]]
         result=thresholdfunctionparticle(thresholdfunction(thresholdvalues,lossvalues),forgive,forgiveoffset)
         return result
+
+    @classmethod
+    def fromRandom(cls,forgive=.1,forgiveoffset=0,points=10,maxloss=20):
+        thresholdvalues=[1.0,0.0]+[random.uniform(0,1) for i in range(points-2)]
+        thresholdvalues.sort(reverse=True)
+        lossvalues=[0.0,maxloss]+[random.uniform(0,maxloss) for i in range(points-2)]
+        lossvalues.sort()
+        return thresholdfunctionparticle(thresholdfunction(thresholdvalues,lossvalues),forgive,forgiveoffset)
 
     def __str__(self):
         return "SeqAutocratic {} {} {} ({},{:.4},{:.4})".format(self.forgive,self.forgiveoffset,str(self.thresholdfunc),self.round,self.opponentloss,self.thresholdfunc.getValue(self.opponentloss))
@@ -236,6 +260,29 @@ class thresholdfunctionparticle:
 
     def perturb(self, stepsize, expandfactor=8):
         return [thresholdfunctionparticle(self.thresholdfunc.permute(stepsize),self.forgive,self.forgiveoffset) for i in range(expandfactor)]
+
+    def hillclimb(self,stepsize,expandfactor=8):
+        return [thresholdfunctionparticle(t,self.forgive,self.forgiveoffset) for t in self.thresholdfunc.hillclimb(stepsize)]+\
+               [thresholdfunctionparticle(self.thresholdfunc,self.forgive*math.exp(stepsize),self.forgiveoffset),
+                thresholdfunctionparticle(self.thresholdfunc,self.forgive*math.exp(-stepsize),self.forgiveoffset),
+                thresholdfunctionparticle(self.thresholdfunc,self.forgive,self.forgiveoffset+1),
+                thresholdfunctionparticle(self.thresholdfunc,self.forgive,max(0,self.forgiveoffset-1))]
+
+    def plotfunction(self,title="ThresholdFunction"):
+        plt.figure(figsize=(4,3))
+        plt.plot(self.thresholdfunc.lossvalues,self.thresholdfunc.thresholdvalues)
+        plt.plot([self.opponentloss],[self.thresholdfunc.getValue(self.opponentloss)],"ro")
+        plt.xlim([0,max(20,self.opponentloss*1.1)])
+        plt.ylim([0, 1])
+        plt.xlabel("Opponent Loss")
+        plt.ylabel("Threshold Value")
+        plt.title(title)
+        plt.show()
+
+
+
+
+
 
 def parsefile(filename):
     """

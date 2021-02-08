@@ -8,7 +8,7 @@ class distplayer:
         self.reset()
 
     def __str__(self):
-        return "Distributed Strat"
+        return "Distributed Strat "+str(self.weights)+str([str(x) for x in self.playerlist])
 
     def __repr__(self):
         return str(self)
