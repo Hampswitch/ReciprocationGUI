@@ -79,7 +79,8 @@ annealparams=[(.2,.99,.01,10),
               (.5,.99,.05,10), #5
               (1,.99,.01,10),
               (.5,.995,.001,1),
-              (.5,.99,.01,1)]
+              (.5,.99,.01,1),
+              (.5,.99,.01,10)]
 
 # perturbfunc,expandfactor,resolution
 particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
@@ -177,7 +178,9 @@ combinedparams=[(0,0,0,0),
                 (32,13,8,13), #75
                 (32,14,8,13),
                 (32,15,8,13),
-                (32,16,8,13),]
+                (32,16,8,13),
+                (0,0,9,13),
+                (1,0,9,13),]
 
 # 51-55 - discrete, varying discount factors
 # 56-58 - discrete, varying # moves
@@ -186,6 +189,8 @@ combinedparams=[(0,0,0,0),
 def mksingleopp(params):
     if params[0]=="constslope":
         return negot.thresholdfunctionparticle(points=3,totalloss=params[1])
+    if params[0]=="fromstring":
+        return negot.thresholdfunctionparticle.fromString(params[1])
 
 def getopponent(index):
     if opponentparams[index][0]=="fastlearner":
@@ -263,7 +268,7 @@ if __name__=="__main__":
         verbose=False
     else:
         print "HARDCODED PARAMETERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        c=70
+        c=77
         processes=None
         verbose=True
     o,e,a,p=combinedparams[c]

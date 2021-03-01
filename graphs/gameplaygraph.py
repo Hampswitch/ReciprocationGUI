@@ -52,13 +52,21 @@ if __name__=="__main__":
     p1=seq.thresholdfunctionparticle.fromString("SeqAutocratic 0.1 0 <(1.0,0.0),(0.5,15.0),(0.0,30.0)>")
     p2=tfg.ThresholdFunctions[5][0][0]
     (moves,thresholds,payoffs,compatibility,efficiency,opploss)=makegamegraph(p1,p2,1000)
+
     p1.plotfunction("Player 1 Threshold Function")
-    p2.plotfunction("Player 2 Threshold Function")
+
     p1round=p1.thresholdfunc.getRoundThresholds()
     plt.plot(range(len(p1round)),p1round)
+    plt.ylabel("Threshold Value")
+    plt.xlabel("Round")
+    plt.xlim([0, 30])
     plt.show()
+    p2.plotfunction("Player 2 Threshold Function")
     p2round=p2.thresholdfunc.getRoundThresholds()
     plt.plot(range(len(p2round)),p2round)
+    plt.ylabel("Threshold Value")
+    plt.xlabel("Round")
+    plt.xlim([0,30])
     plt.show()
     plt.plot(range(200),thresholds[0][:200],"r-")
     plt.plot(range(0,200,2),moves[0][:100],"r:")

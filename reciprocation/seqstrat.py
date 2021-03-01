@@ -172,10 +172,10 @@ class thresholdfunction:
     def __str__(self):
         return "<"+",".join(["({},{})".format(t,l) for t,l in zip(self.thresholdvalues,self.lossvalues)])+">"
 
-    def getRoundThresholds(self):
+    def getRoundThresholds(self,limit=0):
         result=[]
         loss=0
-        while loss<self.lossvalues[-1]:
+        while loss<self.lossvalues[-1] and self.getValue(loss)>=limit:
             result.append(self.getValue(loss))
             loss=loss+2*math.sqrt(1-result[-1]**2)
         result.append(self.thresholdvalues[-1])
