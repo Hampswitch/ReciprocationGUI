@@ -48,7 +48,11 @@ opponentparams=[("UCBsplit",1.0),
                 ("GeneralMixed",("constslope",10),0.0,("constslope",20),0.0,("constslope",30),1.0),
                 ("GeneralMixed",("constslope",10),0.0,("constslope",20),1.0,("constslope",30),0.0),
                 ("GeneralMixed",("constslope",10),1.0,("constslope",20),0.0,("constslope",30),0.0),
-                ("GeneralMixed",("constslope",10),0.33,("constslope",20),0.33,("constslope",30),0.34)] #35
+                ("GeneralMixed",("constslope",10),0.33,("constslope",20),0.33,("constslope",30),0.34), #35
+                ("RandomAutocratic",),
+                ("RandomOppLoss",1,50),
+                ("RandomStep",.9,.6,1,50),
+                ] #35
 
 
 # discount, iterations, skiprounds
@@ -180,7 +184,10 @@ combinedparams=[(0,0,0,0),
                 (32,15,8,13),
                 (32,16,8,13),
                 (0,0,9,13),
-                (1,0,9,13),]
+                (1,0,9,13), #80
+                (36,0,9,13),
+                (37,0,9,13),
+                (38,0,9,13),]
 
 # 51-55 - discrete, varying discount factors
 # 56-58 - discrete, varying # moves
@@ -221,6 +228,12 @@ def getopponent(index):
         return discrete.discreteucb(discrete.getdiscretemoves(opponentparams[index][2]),player=0,explore=opponentparams[index][1])
     elif opponentparams[index][0]=="GeneralMixed":
         return distplayer.distplayer([mksingleopp(i) for i in opponentparams[index][1:] if type(i)!=float],[i for i in opponentparams[index][1:] if type(i)==float])
+    elif opponentparams[index][0]=="RandomAutocratic":
+        return negot.thresholdfunctionparticle.randomAutocratic()
+    elif opponentparams[index][0]=="RandomOppLoss":
+        return negot.thresholdfunctionparticle.randomOppLoss(opponentparams[index][1],opponentparams[index][2])
+    elif opponentparams[index][0]=="RandomStep":
+        return negot.thresholdfunctionparticle.randomStep(opponentparams[index][1],opponentparams[index][2],opponentparams[index][3],opponentparams[index][4])
     else:
         raise ValueError("Unrecognized Opponent Type: "+opponentparams[index][0])
 
@@ -268,9 +281,9 @@ if __name__=="__main__":
         verbose=False
     else:
         print "HARDCODED PARAMETERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        c=77
+        c=71
         processes=None
-        verbose=True
+        verbose=False
     o,e,a,p=combinedparams[c]
 
     print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])

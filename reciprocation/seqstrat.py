@@ -190,6 +190,7 @@ class thresholdfunctionparticle:
         self.forgiveoffset=forgiveoffset
         self.round=1+forgiveoffset
         self.opponentloss=0.0
+        self.isRandom=False
 
     @classmethod
     def fromString(cls,s):
@@ -209,6 +210,27 @@ class thresholdfunctionparticle:
         lossvalues.sort()
         return thresholdfunctionparticle(thresholdfunction(thresholdvalues,lossvalues),forgive,forgiveoffset)
 
+    @classmethod
+    def randomAutocratic(cls):
+        result=thresholdfunctionparticle(thresholdfunction([math.sin(random.uniform(0,math.pi/2.0))], [1]), 0,0)
+        result.isRandom=True
+        result.makeRandomFunction=lambda: thresholdfunction([math.sin(random.uniform(0,math.pi/2.0))], [1])
+        return result
+
+    @classmethod
+    def randomStep(cls,hi,lo,minloss,maxloss):
+        result=thresholdfunctionparticle(thresholdfunction([hi,hi,lo], [0]+[random.uniform(minloss,maxloss)]*2), 0, 0)
+        result.isRandom=True
+        result.makeRandomFunction=lambda: thresholdfunction([hi,hi,lo],[0]+[random.uniform(minloss,maxloss)]*2)
+        return result
+
+    @classmethod
+    def randomOppLoss(cls,minloss,maxloss):
+        result= thresholdfunctionparticle(thresholdfunction([1,0], [0,random.uniform(minloss,maxloss)]), 0, 0)
+        result.isRandom=True
+        result.makeRandomFunction=lambda: thresholdfunction([1,0], [0,random.uniform(minloss,maxloss)])
+        return result
+
     def __str__(self):
         return "SeqAutocratic {} {} {} ({},{:.4},{:.4})".format(self.forgive,self.forgiveoffset,str(self.thresholdfunc),self.round,self.opponentloss,self.thresholdfunc.getValue(self.opponentloss))
 
@@ -224,6 +246,8 @@ class thresholdfunctionparticle:
     def reset(self):
         self.round=1+self.forgiveoffset
         self.opponentloss=0.0
+        if self.isRandom:
+            self.thresholdfunc=self.makeRandomFunc()
 
     def getThreshold(self):
         return self.thresholdfunc.getValue(self.opponentloss)
@@ -269,7 +293,7 @@ class thresholdfunctionparticle:
                 thresholdfunctionparticle(self.thresholdfunc,self.forgive,max(0,self.forgiveoffset-1))]
 
     def plotfunction(self,title="ThresholdFunction"):
-        plt.figure(figsize=(4,3))
+        plt.figure(figsize=(6,4.5))
         plt.plot(self.thresholdfunc.lossvalues,self.thresholdfunc.thresholdvalues)
         plt.plot([self.opponentloss],[self.thresholdfunc.getValue(self.opponentloss)],"ro")
         plt.xlim([0,max(20,self.opponentloss*1.1)])
