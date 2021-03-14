@@ -211,24 +211,39 @@ class thresholdfunctionparticle:
         return thresholdfunctionparticle(thresholdfunction(thresholdvalues,lossvalues),forgive,forgiveoffset)
 
     @classmethod
+    def fixedAutocratic(cls,threshold):
+        return thresholdfunctionparticle(thresholdfunction([threshold],[1]),0,0)
+
+    @classmethod
     def randomAutocratic(cls):
         result=thresholdfunctionparticle(thresholdfunction([math.sin(random.uniform(0,math.pi/2.0))], [1]), 0,0)
         result.isRandom=True
-        result.makeRandomFunction=lambda: thresholdfunction([math.sin(random.uniform(0,math.pi/2.0))], [1])
+        result.makeRandomFunc=lambda: thresholdfunction([math.sin(random.uniform(0,math.pi/2.0))], [1])
+        result.getSamples = lambda n: (thresholdfunctionparticle.fixedAutocratic(math.sin(math.pi*.5*i/float(n-1))) for i in range(n))
         return result
+
+    @classmethod
+    def fixedStep(cls,hi,lo,loss):
+        return thresholdfunctionparticle(thresholdfunction([hi,hi,lo], [0]+[loss]*2), 0, 0)
 
     @classmethod
     def randomStep(cls,hi,lo,minloss,maxloss):
         result=thresholdfunctionparticle(thresholdfunction([hi,hi,lo], [0]+[random.uniform(minloss,maxloss)]*2), 0, 0)
         result.isRandom=True
-        result.makeRandomFunction=lambda: thresholdfunction([hi,hi,lo],[0]+[random.uniform(minloss,maxloss)]*2)
+        result.makeRandomFunc=lambda: thresholdfunction([hi,hi,lo],[0]+[random.uniform(minloss,maxloss)]*2)
+        result.getSamples = lambda n: (thresholdfunctionparticle.fixedStep(hi,lo,minloss+(maxloss-minloss)*i/float(n-1)) for i in range(n))
         return result
+
+    @classmethod
+    def fixedOppLoss(cls,loss):
+        return thresholdfunctionparticle(thresholdfunction([1,0], [0,loss]), 0, 0)
 
     @classmethod
     def randomOppLoss(cls,minloss,maxloss):
         result= thresholdfunctionparticle(thresholdfunction([1,0], [0,random.uniform(minloss,maxloss)]), 0, 0)
         result.isRandom=True
-        result.makeRandomFunction=lambda: thresholdfunction([1,0], [0,random.uniform(minloss,maxloss)])
+        result.makeRandomFunc=lambda: thresholdfunction([1,0], [0,random.uniform(minloss,maxloss)])
+        result.getSamples = lambda n: (thresholdfunctionparticle.fixedOppLoss(minloss+(maxloss-minloss)*i/float(n-1)) for i in range(n))
         return result
 
     def __str__(self):

@@ -173,6 +173,18 @@ def plotfuncs(r):
     plt.legend()
     plt.show()
 
+def plotthreshold(particle):
+    (xvals, yvals) = (particle.thresholdfunc.lossvalues, particle.thresholdfunc.thresholdvalues)
+    plt.plot(xvals, yvals)
+    plt.xlim([0, 15])
+    plt.show()
+
+def plotroundfunc(particle):
+    p2round = particle.thresholdfunc.getRoundThresholds()
+    (xvals, yvals) = (range(len(p2round)), p2round)
+    plt.plot(xvals, yvals)
+    plt.xlim([0, 100])
+    plt.show()
 
 if __name__=="__main__":
     pass

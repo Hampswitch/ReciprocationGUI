@@ -281,9 +281,9 @@ if __name__=="__main__":
         verbose=False
     else:
         print "HARDCODED PARAMETERS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-        c=71
+        c=81
         processes=None
-        verbose=False
+        verbose=True
     o,e,a,p=combinedparams[c]
 
     print (c,opponentparams[o],evaluationparams[e],annealparams[a],particleparams[p])

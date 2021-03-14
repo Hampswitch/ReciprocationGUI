@@ -34,15 +34,24 @@ if True:
             s=s+" {:},{:} ".format(numpy.mean(target),smsa.DescrStatsW(target).tconfint_mean(alpha=.05)[0]-numpy.mean(target))
         print(s)
 
-    for run,c in zip(runfuncs,["r","g","b","c","m"]):
+    labels={"g":".05","m":".02","b":".01","c":".005","r":".002"}
+    plt.figure(figsize=(6, 4.5))
+    for run,c in zip(runfuncs,["g","m","b","c","r"]):
         for strat in run:
-            if c in ["r","b","m"]:
+            if c in ["r","b","g"]:
                 rts=strat[1].thresholdfunc.getRoundThresholds()
-                plt.plot(range(len(rts)),rts,c)
+                if c in labels:
+                    plt.plot(range(0,2*len(rts),2),rts,c,label=labels[c])
+                    del labels[c]
+                else:
+                    plt.plot(range(0,2*len(rts),2), rts, c)
     #plt.yscale("log")
     plt.ylim([0, 1])
-    plt.xlim([0,100])
-    plt.legend([".05",".02",".01",".005",".002"])
+    plt.xlim([0, 100])
+    plt.xlabel("Round")
+    plt.ylabel("Threshold Value")
+    plt.legend()
+    plt.title("Compromise Rate by Discount Factor")
     plt.show()
 
 
@@ -65,14 +74,25 @@ if True:
             s=s+" {:},{:} ".format(numpy.mean(target),smsa.DescrStatsW(target).tconfint_mean(alpha=.05)[0]-numpy.mean(target))
         print(s)
 
-    for run, c in zip(runfuncs, ["r", "g", "b"]):
+    labels={"r":"Slow Compromiser (30)","b":"Medium Compromiser (20)","g":"Fast Compromiser (10)"}
+    plt.figure(figsize=(6, 4.5))
+    for run, c in zip(runfuncs, ["r", "b", "g"]):
         for strat in run:
             if c in ["r","g","b"]:
                 rts = strat[1].thresholdfunc.getRoundThresholds(strat[2])
                 print(len(rts))
                 print(rts)
-                plt.plot(range(len(rts)), rts, c)
+                if c in labels:
+                    plt.plot(range(0,2*len(rts),2), rts, c,label=labels[c])
+                    del labels[c]
+                else:
+                    plt.plot(range(0,2*len(rts),2), rts, c)
+
     #plt.yscale("log")
     plt.ylim([0, 1])
-    plt.legend(["30","20","10"])
+    plt.xlim([0, 60])
+    plt.xlabel("Round")
+    plt.ylabel("Threshold Value")
+    plt.legend()
+    plt.title("Compromise Rate by Opponent")
     plt.show()

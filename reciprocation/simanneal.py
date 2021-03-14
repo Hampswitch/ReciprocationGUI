@@ -12,13 +12,21 @@ import distplayer
 
 
 def evalwrap(dillarglist):
-    arglist=dill.loads(dillarglist)
     opponent,particle,iterations,discountfactor,repetitions,skiprounds=dill.loads(dillarglist)
-    result= reciprocation.evaluation.evaluate(opponent, particle, iterations, discountfactor, repetitions, skipfirst=arglist[5])
-    if arglist[4]<2:
-        return result[1]
+    if "getSamples" in dir(opponent):
+        result = 0.0
+        for o in opponent.getSamples(repetitions):
+            result = result + \
+                     reciprocation.evaluation.evaluate(o, particle, iterations, discountfactor, 1, skipfirst=skiprounds)[1]
+        result=result / repetitions
+    elif isinstance(opponent, distplayer.distplayer):
+        result = 0.0
+        for player, wt in zip(opponent.playerlist, opponent.weights):
+            result = result + wt * reciprocation.evaluation.evaluate(player, particle, iterations, discountfactor, repetitions,
+                                                                     skipfirst=skiprounds)[1 if repetitions == 1 else 2]
     else:
-        return result[2]
+        result=reciprocation.evaluation.evaluate(opponent, particle, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1 if repetitions == 1 else 2]
+    return result
 
 def paralleleval(opponent,population,iterations,discountfactor,repetitions,skiprounds,processes=4):
     pool=multiprocessing.Pool(processes=processes)
@@ -32,16 +40,18 @@ def paralleleval(opponent,population,iterations,discountfactor,repetitions,skipr
 def nonparalleleval(opponent,population,iterations,discountfactor,repetitions,skiprounds):
     results=[]
     for p in population:
-        if repetitions<2:
-            if isinstance(opponent,distplayer.distplayer):
-                result=0.0
-                for player,wt in zip(opponent.playerlist,opponent.weights):
-                    result=result+wt*reciprocation.evaluation.evaluate(player,p,iterations,discountfactor,repetitions,skipfirst=skiprounds)[1]
-                results.append(result)
-            else:
-                results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1])
+        if "getSamples" in dir(opponent):
+            result=0.0
+            for o in opponent.getSamples(repetitions):
+                result=result+ reciprocation.evaluation.evaluate(o, p, iterations, discountfactor, 1, skipfirst=skiprounds)[1]
+            results.append(result/repetitions)
+        elif isinstance(opponent,distplayer.distplayer):
+            result = 0.0
+            for player, wt in zip(opponent.playerlist, opponent.weights):
+                result = result + wt * reciprocation.evaluation.evaluate(player, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1 if repetitions==1 else 2]
+            results.append(result)
         else:
-            results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[2])
+            results.append(reciprocation.evaluation.evaluate(opponent, p, iterations, discountfactor, repetitions, skipfirst=skiprounds)[1 if repetitions==1 else 2])
     return results
 
 def anneal(population,opponent,stepsize,stepratio,minstep,perturbfunc="perturb",perturbargs=[],iterations=1000,discountfactor=.99,repetitions=1,processes=4,verbose=False,skiprounds=0):
