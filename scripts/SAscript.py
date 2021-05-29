@@ -52,7 +52,7 @@ opponentparams=[("UCBsplit",1.0),
                 ("RandomAutocratic",),
                 ("RandomOppLoss",1,50),
                 ("RandomStep",.9,.6,1,50),
-                ] #35
+                ("GeneralMixed",("autocratic",.9),.5,("autocratic",.7),.5)]
 
 
 # discount, iterations, skiprounds
@@ -101,7 +101,14 @@ particleparams=[((10,"regularlinear",33),"fullvertperturb",(8,)),
                 ((10,"thresholdfunction",10,20),"perturb",(20,)),
                 ((10,"thresholdhillclimb",10,20),"hillclimb",(1,)),
                 ((10,"thresholdrandom",10,20),"hillclimb",(1,)),
-                ((10,"thresholdrandom",10,30),"hillclimb",(1,))]
+                ((10,"thresholdrandom",2,30),"hillclimb",(1,)),
+                ((10,"thresholdrandom",3,30),"hillclimb",(1,)),  #15
+                ((10,"thresholdrandom",4,30),"hillclimb",(1,)),
+                ((10,"thresholdrandom",5,30),"hillclimb",(1,)),
+                ((10,"thresholdrandom",6,30),"hillclimb",(1,)),
+                ((10,"thresholdrandom",7,30),"hillclimb",(1,)),
+                ((10,"thresholdrandom",8,30),"hillclimb",(1,)), #20
+                ((10,"thresholdrandom",9,30),"hillclimb",(1,))]
 
 # opponent,eval,anneal,particle
 combinedparams=[(0,0,0,0),
@@ -187,7 +194,32 @@ combinedparams=[(0,0,0,0),
                 (1,0,9,13), #80
                 (36,0,9,13),
                 (37,0,9,13),
-                (38,0,9,13),]
+                (38,0,9,13),
+                (36,0,9,14),
+                (36,0,9,15), #85
+                (36,0,9,16),
+                (36,0,9,17),
+                (36,0,9,18),
+                (36,0,9,19),
+                (36,0,9,20), #90
+                (36,0,9,21),
+                (37,0,9,14),
+                (37,0,9,15),
+                (37,0,9,16),
+                (37,0,9,17), #95
+                (37,0,9,18),
+                (37,0,9,19),
+                (37,0,9,20),
+                (37,0,9,21),
+                (38,0,9,14), #100
+                (38,0,9,15),
+                (38,0,9,16),
+                (38,0,9,17),
+                (38,0,9,18),
+                (38,0,9,19), #105
+                (38,0,9,20),
+                (38,0,9,21)]
+# opponent,eval,anneal,particle
 
 # 51-55 - discrete, varying discount factors
 # 56-58 - discrete, varying # moves
@@ -198,6 +230,8 @@ def mksingleopp(params):
         return negot.thresholdfunctionparticle(points=3,totalloss=params[1])
     if params[0]=="fromstring":
         return negot.thresholdfunctionparticle.fromString(params[1])
+    if params[0]=="autocratic":
+        return ls.slopestrat(params[1])
 
 def getopponent(index):
     if opponentparams[index][0]=="fastlearner":
@@ -269,7 +303,7 @@ def getparticleparams(index):
     elif particle[1]=="thresholdhillclimb":
         return (negot.thresholdfunctionparticle(points=particle[2],totalloss=particle[3]).hillclimb(.5),perturbfunc,perturbargs)
     elif particle[1]=="thresholdrandom":
-        return ([negot.thresholdfunctionparticle.fromRandom() for i in range(particle[0])],perturbfunc,perturbargs)
+        return ([negot.thresholdfunctionparticle.fromRandom(points=particle[2]) for i in range(particle[0])],perturbfunc,perturbargs)
     else:
         raise ValueError("Unrecognized particle type: "+str(particle[1]))
 

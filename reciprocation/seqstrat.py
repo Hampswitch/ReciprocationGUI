@@ -246,6 +246,12 @@ class thresholdfunctionparticle:
         result.getSamples = lambda n: (thresholdfunctionparticle.fixedOppLoss(minloss+(maxloss-minloss)*i/float(n-1)) for i in range(n))
         return result
 
+    @classmethod
+    def discreteRandom(cls,n,l):
+        tvallist=[math.sin(math.pi*.5*i/float(n-1)) for i in range(n)]
+        result=thresholdfunctionparticle()
+        result.tvalues=tvallist
+
     def __str__(self):
         return "SeqAutocratic {} {} {} ({},{:.4},{:.4})".format(self.forgive,self.forgiveoffset,str(self.thresholdfunc),self.round,self.opponentloss,self.thresholdfunc.getValue(self.opponentloss))
 

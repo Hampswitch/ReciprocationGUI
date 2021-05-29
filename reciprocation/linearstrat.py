@@ -192,7 +192,7 @@ class slopestrat:
             return math.sqrt(1-self.threshold**2)
         else:
             if move>=self.threshold:
-                return math.sqrt(1-self.threshold**2)
+                return math.sqrt(1-move**2)
             else:
                 x=self.threshold*math.sqrt(1-move**2)-move*math.sqrt(1-self.threshold**2)
                 r=-self.threshold*x+math.sqrt(self.threshold**2*x**2-x**2-self.threshold**2+1)
